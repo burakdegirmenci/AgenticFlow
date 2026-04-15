@@ -1,12 +1,21 @@
 """FastAPI application entry point."""
+
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import sites, workflows, nodes, executions, agent, settings as settings_router, support
-
+from app.routers import (
+    agent,
+    executions,
+    nodes,
+    settings as settings_router,
+    sites,
+    support,
+    workflows,
+)
 
 settings = get_settings()
 
@@ -16,6 +25,7 @@ async def lifespan(app: FastAPI):
     # Startup
     init_db()
     from app.services.scheduler_service import scheduler_service
+
     scheduler_service.start()
     scheduler_service.refresh_all()
     yield

@@ -9,6 +9,7 @@ Use `get_provider(name)` to fetch a provider instance. The global default
 comes from `settings.LLM_PROVIDER` but individual chat/node calls may
 override it.
 """
+
 from __future__ import annotations
 
 from app.services.llm.base import (
@@ -36,9 +37,7 @@ def get_provider(name: str | None = None) -> LLMProvider:
     key = name or get_llm_setting("LLM_PROVIDER") or "anthropic_api"
     cls = _PROVIDERS.get(key)
     if cls is None:
-        raise LLMProviderError(
-            f"Unknown LLM provider: {key!r}. Available: {available_providers()}"
-        )
+        raise LLMProviderError(f"Unknown LLM provider: {key!r}. Available: {available_providers()}")
     return cls()
 
 
@@ -48,7 +47,6 @@ from app.services.llm import (  # noqa: F401,E402
     anthropic_cli,
     google_genai,
 )
-
 
 __all__ = [
     "LLMProvider",

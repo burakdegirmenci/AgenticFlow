@@ -25,6 +25,7 @@ still iterates and returns what it would have written. Abort policy: if
 ``abort_on_consecutive_errors`` updates fail in a row the node raises
 NodeError and the workflow stops. Counter resets on every success.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -225,8 +226,14 @@ class UrunUpdateOzelAlan1BatchNode(BaseNode):
                 )
                 if consecutive_errors >= abort_threshold:
                     return self._abort(
-                        out_results, updated, errors, skip_has_oa1,
-                        skip_no_sku, skip_noop, skip_same, dry_run,
+                        out_results,
+                        updated,
+                        errors,
+                        skip_has_oa1,
+                        skip_no_sku,
+                        skip_noop,
+                        skip_same,
+                        dry_run,
                     )
                 continue
 
@@ -339,8 +346,14 @@ class UrunUpdateOzelAlan1BatchNode(BaseNode):
                     )
                     if consecutive_errors >= abort_threshold:
                         return self._abort(
-                            out_results, updated, errors, skip_has_oa1,
-                            skip_no_sku, skip_noop, skip_same, dry_run,
+                            out_results,
+                            updated,
+                            errors,
+                            skip_has_oa1,
+                            skip_no_sku,
+                            skip_noop,
+                            skip_same,
+                            dry_run,
                         )
 
             if delay_sec > 0 and idx < len(items) - 1:
@@ -360,9 +373,7 @@ class UrunUpdateOzelAlan1BatchNode(BaseNode):
         }
 
     # ------------------------------------------------------------------
-    async def _update_one(
-        self, client: Any, urun_karti_id: int, yeni_oa1: str
-    ) -> None:
+    async def _update_one(self, client: Any, urun_karti_id: int, yeni_oa1: str) -> None:
         """Single UrunKartiGuncelle call — runs the blocking SOAP in a thread.
 
         Uses the same partial-update pattern as the original worker:
@@ -398,11 +409,7 @@ class UrunUpdateOzelAlan1BatchNode(BaseNode):
         skip_same: int,
         dry_run: bool,
     ) -> dict[str, Any]:
-        last_errors = [
-            r.get("error", "?")
-            for r in out_results[-3:]
-            if r.get("status") == "error"
-        ]
+        last_errors = [r.get("error", "?") for r in out_results[-3:] if r.get("status") == "error"]
         raise NodeError(
             "",
             self.type_id,

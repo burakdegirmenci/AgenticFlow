@@ -8,6 +8,7 @@ Config:
         entire inputs dict is serialized.
     indent: JSON indent level (default 2). Set to 0 for compact output.
 """
+
 import json
 import os
 from datetime import datetime
@@ -62,8 +63,7 @@ class JsonExportNode(BaseNode):
                 "type": "string",
                 "title": "Kaynak Alan (dotted path)",
                 "description": (
-                    "Boşsa tüm inputs serileştirilir. "
-                    "Örn: 'result.UrunList' veya 'urunler.0'."
+                    "Boşsa tüm inputs serileştirilir. Örn: 'result.UrunList' veya 'urunler.0'."
                 ),
                 "default": "",
             },

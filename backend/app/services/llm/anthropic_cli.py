@@ -27,6 +27,7 @@ Windows event loop note:
   the async world via `asyncio.to_thread` / a thread-safe queue. Works under
   any event loop implementation on any platform.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -36,7 +37,8 @@ import queue
 import shutil
 import subprocess
 import threading
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.services.llm import register
 from app.services.llm.base import (
@@ -114,7 +116,8 @@ class AnthropicCLIProvider(LLMProvider):
         args = [
             cli,
             "--print",
-            "--output-format", "stream-json",
+            "--output-format",
+            "stream-json",
             "--verbose",
         ]
         if model:
@@ -154,7 +157,7 @@ class AnthropicCLIProvider(LLMProvider):
             raise
 
         # Background reader thread: pushes raw bytes lines into a queue.
-        line_q: "queue.Queue[bytes | None]" = queue.Queue()
+        line_q: queue.Queue[bytes | None] = queue.Queue()
 
         def _reader() -> None:
             try:
@@ -194,9 +197,9 @@ class AnthropicCLIProvider(LLMProvider):
                 proc.kill()
             reader_thread.join(timeout=2)
             try:
-                stderr = (
-                    await asyncio.to_thread(proc.stderr.read)
-                ).decode("utf-8", errors="replace")
+                stderr = (await asyncio.to_thread(proc.stderr.read)).decode(
+                    "utf-8", errors="replace"
+                )
             except Exception:
                 stderr = ""
             if proc.returncode and proc.returncode != 0:

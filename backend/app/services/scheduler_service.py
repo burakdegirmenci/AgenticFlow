@@ -16,9 +16,9 @@ Job ID convention
 allows multiple trigger nodes inside the same workflow (e.g. a polling node
 AND a schedule node) and makes removal simple.
 """
+
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import TYPE_CHECKING
 
@@ -85,9 +85,7 @@ class SchedulerService:
 
         db = SessionLocal()
         try:
-            workflows = (
-                db.query(Workflow).filter(Workflow.is_active.is_(True)).all()
-            )
+            workflows = db.query(Workflow).filter(Workflow.is_active.is_(True)).all()
             for wf in workflows:
                 self._register_workflow_jobs(wf)
             logger.info(
@@ -132,9 +130,7 @@ class SchedulerService:
                 except Exception:  # noqa: BLE001
                     logger.exception("Failed to remove job %s", job.id)
         if removed:
-            logger.info(
-                "Removed %d scheduled job(s) for workflow %d", removed, workflow_id
-            )
+            logger.info("Removed %d scheduled job(s) for workflow %d", removed, workflow_id)
         return removed
 
     def list_jobs(self) -> list[dict]:
@@ -146,9 +142,7 @@ class SchedulerService:
             out.append(
                 {
                     "id": job.id,
-                    "next_run_time": (
-                        job.next_run_time.isoformat() if job.next_run_time else None
-                    ),
+                    "next_run_time": (job.next_run_time.isoformat() if job.next_run_time else None),
                     "trigger": str(job.trigger),
                 }
             )
@@ -207,9 +201,7 @@ class SchedulerService:
             try:
                 return CronTrigger.from_crontab(expr, timezone=tz)
             except Exception as e:  # noqa: BLE001
-                logger.error(
-                    "Invalid cron expression %r (tz=%s): %s", expr, tz, e
-                )
+                logger.error("Invalid cron expression %r (tz=%s): %s", expr, tz, e)
                 return None
         if node_type == _POLLING_NODE_TYPE:
             try:
@@ -227,9 +219,7 @@ scheduler_service = SchedulerService()
 
 
 # ---------------------------------------------------------------- job callback
-async def _run_workflow_job(
-    workflow_id: int, trigger_node_type: str, trigger_node_id: str
-) -> None:
+async def _run_workflow_job(workflow_id: int, trigger_node_type: str, trigger_node_id: str) -> None:
     """APScheduler fires this when a schedule/polling job is due.
 
     Runs the full workflow with a fresh DB session and the appropriate
@@ -237,9 +227,7 @@ async def _run_workflow_job(
     future fires because of a transient failure.
     """
     trigger_type = (
-        TriggerType.POLLING
-        if trigger_node_type == _POLLING_NODE_TYPE
-        else TriggerType.SCHEDULE
+        TriggerType.POLLING if trigger_node_type == _POLLING_NODE_TYPE else TriggerType.SCHEDULE
     )
     db = SessionLocal()
     try:
@@ -252,9 +240,7 @@ async def _run_workflow_job(
             )
             return
         if not wf.is_active:
-            logger.info(
-                "Skipping scheduled run for inactive workflow %d", workflow_id
-            )
+            logger.info("Skipping scheduled run for inactive workflow %d", workflow_id)
             return
         executor = WorkflowExecutor(db)
         execution = await executor.run(

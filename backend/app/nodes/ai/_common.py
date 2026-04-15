@@ -1,9 +1,9 @@
 """Shared helpers for AI nodes (template interpolation, provider resolution)."""
+
 from __future__ import annotations
 
 import re
 from typing import Any
-
 
 _TEMPLATE_RE = re.compile(r"\{\{\s*([\w\.]+)\s*\}\}")
 

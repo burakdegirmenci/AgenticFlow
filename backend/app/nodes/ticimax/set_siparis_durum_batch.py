@@ -42,6 +42,7 @@ the full payment list. ``OdenenTutar`` is also flaky in batch responses
 re-fetching any order where ``Odemeler`` is missing — the individual
 query is the source of truth. See ``refetch_missing_odemeler``.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -132,8 +133,7 @@ class SetSiparisDurumBatchNode(BaseNode):
                 "type": "boolean",
                 "title": "Müşteriye Mail Gönder",
                 "description": (
-                    "True ise durum değişikliği e-postası müşteriye "
-                    "otomatik gönderilir."
+                    "True ise durum değişikliği e-postası müşteriye otomatik gönderilir."
                 ),
                 "default": False,
             },
@@ -248,8 +248,7 @@ class SetSiparisDurumBatchNode(BaseNode):
             raise NodeError(
                 "",
                 self.type_id,
-                f"siparisler_path '{path}' did not resolve to a list "
-                f"(got {type(raw).__name__})",
+                f"siparisler_path '{path}' did not resolve to a list (got {type(raw).__name__})",
             )
 
         items: list[dict[str, Any]] = [s for s in raw if isinstance(s, dict)]
@@ -309,8 +308,13 @@ class SetSiparisDurumBatchNode(BaseNode):
                 )
                 if consecutive_errors >= abort_threshold:
                     return self._abort(
-                        out_results, updated, errors, skip_no_payment,
-                        skip_wrong_odeme_tipi, skip_not_approved, dry_run,
+                        out_results,
+                        updated,
+                        errors,
+                        skip_no_payment,
+                        skip_wrong_odeme_tipi,
+                        skip_not_approved,
+                        dry_run,
                     )
                 continue
 
@@ -325,9 +329,7 @@ class SetSiparisDurumBatchNode(BaseNode):
                     # Odemeler is missing.
                     refetch_total += 1
                     try:
-                        refetched_siparis = await self._refetch_one(
-                            client, int(siparis_id)
-                        )
+                        refetched_siparis = await self._refetch_one(client, int(siparis_id))
                         if refetched_siparis:
                             odemeler = _extract_odemeler(refetched_siparis)
                             refetched = True
@@ -357,10 +359,7 @@ class SetSiparisDurumBatchNode(BaseNode):
                     )
                     continue
 
-                matching_tip = [
-                    p for p in odemeler
-                    if p.get("OdemeTipi") in require_tipler
-                ]
+                matching_tip = [p for p in odemeler if p.get("OdemeTipi") in require_tipler]
                 if not matching_tip:
                     skip_wrong_odeme_tipi += 1
                     tipler_gorulen = [p.get("OdemeTipi") for p in odemeler]
@@ -445,7 +444,10 @@ class SetSiparisDurumBatchNode(BaseNode):
             else:
                 try:
                     await self._update_one(
-                        client, int(siparis_id), yeni_durum, mail_bilgilendir,
+                        client,
+                        int(siparis_id),
+                        yeni_durum,
+                        mail_bilgilendir,
                         kargo_takip_no=kargo_takip_no,
                         kargo_takip_link=kargo_takip_link,
                     )
@@ -483,8 +485,13 @@ class SetSiparisDurumBatchNode(BaseNode):
                     )
                     if consecutive_errors >= abort_threshold:
                         return self._abort(
-                            out_results, updated, errors, skip_no_payment,
-                            skip_wrong_odeme_tipi, skip_not_approved, dry_run,
+                            out_results,
+                            updated,
+                            errors,
+                            skip_no_payment,
+                            skip_wrong_odeme_tipi,
+                            skip_not_approved,
+                            dry_run,
                         )
 
             # Early exit once we've reached the max_updates limit (only
@@ -499,10 +506,7 @@ class SetSiparisDurumBatchNode(BaseNode):
             "updated_count": updated,
             "error_count": errors,
             "skipped_count": (
-                skip_no_payment
-                + skip_wrong_odeme_tipi
-                + skip_not_approved
-                + skip_no_kargo_takip_no
+                skip_no_payment + skip_wrong_odeme_tipi + skip_not_approved + skip_no_kargo_takip_no
             ),
             "skip_no_payment": skip_no_payment,
             "skip_wrong_odeme_tipi": skip_wrong_odeme_tipi,
@@ -515,9 +519,7 @@ class SetSiparisDurumBatchNode(BaseNode):
         }
 
     # ------------------------------------------------------------------
-    async def _refetch_one(
-        self, client: Any, siparis_id: int
-    ) -> dict[str, Any] | None:
+    async def _refetch_one(self, client: Any, siparis_id: int) -> dict[str, Any] | None:
         """Re-query a single order with ``OdemeGetir=True`` to populate
         ``Odemeler`` (works around Ticimax's inconsistent batch response).
         """
@@ -539,9 +541,7 @@ class SetSiparisDurumBatchNode(BaseNode):
                 SiralamaDegeri="Id",
                 SiralamaYonu="Desc",
             )
-            return client.siparis.SelectSiparis(
-                UyeKodu=client.uye_kodu, f=f, s=s
-            )
+            return client.siparis.SelectSiparis(UyeKodu=client.uye_kodu, f=f, s=s)
 
         raw = await asyncio.to_thread(_do)
         if raw is None:
@@ -584,9 +584,7 @@ class SetSiparisDurumBatchNode(BaseNode):
             if kargo_takip_link:
                 kwargs["KargoTakipLink"] = kargo_takip_link
             request = client.siparis_factory.SetSiparisDurumRequest(**kwargs)
-            return client.siparis.SetSiparisDurum(
-                UyeKodu=client.uye_kodu, request=request
-            )
+            return client.siparis.SetSiparisDurum(UyeKodu=client.uye_kodu, request=request)
 
         result = await asyncio.to_thread(_do)
         # Ticimax returns a response object: IsError / ErrorMessage
@@ -610,11 +608,7 @@ class SetSiparisDurumBatchNode(BaseNode):
         skip_not_approved: int,
         dry_run: bool,
     ) -> dict[str, Any]:
-        last_errors = [
-            r.get("error", "?")
-            for r in out_results[-3:]
-            if r.get("status") == "error"
-        ]
+        last_errors = [r.get("error", "?") for r in out_results[-3:] if r.get("status") == "error"]
         raise NodeError(
             "",
             self.type_id,

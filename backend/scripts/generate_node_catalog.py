@@ -19,30 +19,24 @@ Strategy:
       two args alan_adi/uye_kodu because those come from the site)
     - Wrap the function's return value in {"result": ...}
 """
+
 from __future__ import annotations
 
 import ast
-import re
 import textwrap
 from pathlib import Path
 
-SERVER_PY = Path(
-    r"C:/Users/burakdegirmenci/Desktop/ProductDetail/server.py"
-)
+SERVER_PY = Path(r"C:/Users/burakdegirmenci/Desktop/ProductDetail/server.py")
 OUT_FILE = (
-    Path(__file__).resolve().parent.parent
-    / "app"
-    / "nodes"
-    / "ticimax"
-    / "_auto_generated.py"
+    Path(__file__).resolve().parent.parent / "app" / "nodes" / "ticimax" / "_auto_generated.py"
 )
 
 # Categorize by verb prefix for nicer UX in the palette
 CATEGORY_ICONS: dict[str, tuple[str, str]] = {
-    "select": ("search", "#0ea5e9"),   # blue
+    "select": ("search", "#0ea5e9"),  # blue
     "get": ("download", "#0ea5e9"),
-    "save": ("save", "#10b981"),       # green
-    "update": ("edit-3", "#f59e0b"),   # amber
+    "save": ("save", "#10b981"),  # green
+    "update": ("edit-3", "#f59e0b"),  # amber
     "set": ("edit-3", "#f59e0b"),
     "delete": ("trash-2", "#ef4444"),  # red
     "guncelle": ("edit-3", "#f59e0b"),
@@ -149,7 +143,7 @@ def build_config_schema(
         else:
             required.append(pname)
         props[pname] = prop
-        param_list.append((pname, default_map.get(pname, None)))
+        param_list.append((pname, default_map.get(pname)))
 
     schema: dict = {"type": "object", "properties": props}
     if required:
@@ -250,28 +244,22 @@ def generate() -> str:
         # Site credentials
         out.append("        site = context.site")
         out.append("        if site is None:")
-        out.append(
-            '            raise RuntimeError("Ticimax node requires a site on the workflow")'
-        )
+        out.append('            raise RuntimeError("Ticimax node requires a site on the workflow")')
         out.append("        alan_adi = site.domain")
-        out.append(
-            "        uye_kodu = CryptoService.decrypt(site.uye_kodu_encrypted)"
-        )
+        out.append("        uye_kodu = CryptoService.decrypt(site.uye_kodu_encrypted)")
         out.append("")
         out.append("        def _get_client(a: str, u: str):")
         out.append("            return TicimaxService.get_client(site)")
         out.append("")
         # Extract config params with defaults
         for pname, default_val in params:
-            out.append(
-                f"        {pname} = config.get({pname!r}, {default_val!r})"
-            )
+            out.append(f"        {pname} = config.get({pname!r}, {default_val!r})")
         out.append("")
         out.append("        def _run():")
         out.append(body_indented.rstrip() or "            pass")
         out.append("")
-        out.append('        # Run the synchronous SOAP call in a worker thread so we')
-        out.append('        # do not block the FastAPI event loop (zeep is sync).')
+        out.append("        # Run the synchronous SOAP call in a worker thread so we")
+        out.append("        # do not block the FastAPI event loop (zeep is sync).")
         out.append('        return {"result": await asyncio.to_thread(_run)}')
         out.append("")
         out.append("")

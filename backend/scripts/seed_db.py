@@ -15,6 +15,7 @@ Demos seeded:
 
 The script does NOT activate the demos; the user must enable them from the UI.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -75,9 +76,7 @@ def _ozelalan1_demo() -> dict[str, Any]:
                     "id": "lg",
                     "type": "output.log",
                     "position": {"x": 880, "y": 120},
-                    "data": {
-                        "config": {"label": "ozelalan1_demo", "max_length": 4000}
-                    },
+                    "data": {"config": {"label": "ozelalan1_demo", "max_length": 4000}},
                 },
             ],
             "edges": [
@@ -190,8 +189,7 @@ def _ticket_classify_demo() -> dict[str, Any]:
                                 "sınıflandır. Yanıtını kısa JSON listesi olarak ver."
                             ),
                             "prompt": (
-                                "Aşağıdaki destek ticketları için sınıflandırma yap:\n\n"
-                                "{{tkt}}"
+                                "Aşağıdaki destek ticketları için sınıflandırma yap:\n\n{{tkt}}"
                             ),
                             "temperature": 0.2,
                             "max_tokens": 2048,
@@ -202,9 +200,7 @@ def _ticket_classify_demo() -> dict[str, Any]:
                     "id": "lg",
                     "type": "output.log",
                     "position": {"x": 920, "y": 120},
-                    "data": {
-                        "config": {"label": "ticket_classify", "max_length": 6000}
-                    },
+                    "data": {"config": {"label": "ticket_classify", "max_length": 6000}},
                 },
             ],
             "edges": [
@@ -231,8 +227,7 @@ def seed(site_id: int, force: bool = False) -> None:
         if not site:
             print(f"[seed] HATA: site_id={site_id} bulunamadı.", file=sys.stderr)
             print(
-                "[seed] Önce UI'dan bir Ticimax sitesi ekleyin "
-                "veya --site-id parametresi verin.",
+                "[seed] Önce UI'dan bir Ticimax sitesi ekleyin veya --site-id parametresi verin.",
                 file=sys.stderr,
             )
             sys.exit(2)

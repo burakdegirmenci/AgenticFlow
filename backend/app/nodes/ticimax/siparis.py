@@ -1,4 +1,5 @@
 """Ticimax order nodes - manually optimized for MVP."""
+
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -166,6 +167,7 @@ class SiparisSelectNode(BaseNode):
             siparis_list = list(siparisler)
 
         from ticimax_client import serialize_zeep_object  # type: ignore
+
         serialized = [serialize_zeep_object(s) for s in siparis_list]
 
         return {

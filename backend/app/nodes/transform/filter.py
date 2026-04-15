@@ -1,4 +1,5 @@
 """Filter transform node - keep items matching a condition expression."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -47,7 +48,7 @@ def _compare(left: Any, op: str, right: Any) -> bool:
             # String length strictly less than right (numeric).
             # None is treated as length 0 so truly empty fields match.
             if left is None:
-                return 0 < int(float(right))
+                return int(float(right)) > 0
             return len(str(left)) < int(float(right))
         if op == "length_gt":
             if left is None:

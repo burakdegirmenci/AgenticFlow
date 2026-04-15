@@ -1,4 +1,5 @@
 """Support ticket API — ticket list, workflow-based reply generation, send."""
+
 from __future__ import annotations
 
 import asyncio
@@ -53,19 +54,25 @@ async def _fetch_tickets(
 
     def _run() -> Any:
         filtre = client.custom_factory.WebMusteriTalepFiltre(
-            ID=-1, UyeID=-1, DurumID=durum_id, KonuID=-1,
-            Cozuldu=-1, DetayId=-1, SitedeGoster=-1, Tip=-1,
+            ID=-1,
+            UyeID=-1,
+            DurumID=durum_id,
+            KonuID=-1,
+            Cozuldu=-1,
+            DetayId=-1,
+            SitedeGoster=-1,
+            Tip=-1,
         )
         sayfalama = client.custom_factory.WebServisSayfalama(
-            SayfaNo=1, KayitSayisi=kayit_sayisi,
-            SiralamaDegeri="ID", SiralamaYonu="Desc",
+            SayfaNo=1,
+            KayitSayisi=kayit_sayisi,
+            SiralamaDegeri="ID",
+            SiralamaYonu="Desc",
         )
         req = client.custom_factory.ServisGetAllSupportTicketsRequest(
             Filtre=filtre, Sayfalama=sayfalama
         )
-        result = client.custom.GetAllSupportTickets(
-            UyeKodu=client.uye_kodu, request=req
-        )
+        result = client.custom.GetAllSupportTickets(UyeKodu=client.uye_kodu, request=req)
         return serialize(result)
 
     raw = await asyncio.to_thread(_run)
@@ -81,9 +88,7 @@ async def _fetch_ticket_messages(
         req = client.custom_factory.ServisGetSupportTicketMessagesRequest(
             DestekId=ticket_id, UyeID=uye_id
         )
-        result = client.custom.GetSupportTicketMessages(
-            UyeKodu=client.uye_kodu, request=req
-        )
+        result = client.custom.GetSupportTicketMessages(UyeKodu=client.uye_kodu, request=req)
         return serialize(result)
 
     raw = await asyncio.to_thread(_run)
@@ -97,11 +102,11 @@ async def _send_ticket_reply(
 
     def _run() -> Any:
         req = client.custom_factory.ServisSaveSupportTicketAnswerRequest(
-            DestekId=ticket_id, Mesaj=message, UyeId=staff_uye_id,
+            DestekId=ticket_id,
+            Mesaj=message,
+            UyeId=staff_uye_id,
         )
-        result = client.custom.SaveSupportTicketAnswer(
-            UyeKodu=client.uye_kodu, request=req
-        )
+        result = client.custom.SaveSupportTicketAnswer(UyeKodu=client.uye_kodu, request=req)
         return serialize(result)
 
     raw = await asyncio.to_thread(_run)
@@ -131,7 +136,9 @@ async def list_tickets(
 ):
     """List support tickets from Ticimax."""
     try:
-        tickets = await _fetch_tickets(db, site_id=site_id, durum_id=durum_id, kayit_sayisi=kayit_sayisi)
+        tickets = await _fetch_tickets(
+            db, site_id=site_id, durum_id=durum_id, kayit_sayisi=kayit_sayisi
+        )
         tickets.sort(key=lambda t: t.get("ID", 0), reverse=True)
         return {"tickets": tickets, "count": len(tickets)}
     except Exception as e:
@@ -147,7 +154,9 @@ async def get_ticket_messages(
 ):
     """Get conversation history for a ticket."""
     try:
-        messages = await _fetch_ticket_messages(db, site_id=site_id, ticket_id=ticket_id, uye_id=uye_id)
+        messages = await _fetch_ticket_messages(
+            db, site_id=site_id, ticket_id=ticket_id, uye_id=uye_id
+        )
         return {"messages": messages}
     except Exception as e:
         raise HTTPException(500, detail=f"Ticket mesajları alınamadı: {e}")
@@ -168,7 +177,9 @@ async def generate_reply(
     """
     wf = db.query(Workflow).filter(Workflow.name == "Destek Yanıtlama").first()
     if not wf:
-        raise HTTPException(404, detail="'Destek Yanıtlama' workflow bulunamadı. Seed script çalıştırın.")
+        raise HTTPException(
+            404, detail="'Destek Yanıtlama' workflow bulunamadı. Seed script çalıştırın."
+        )
 
     executor = WorkflowExecutor(db)
     execution = executor.create_execution(
@@ -189,8 +200,11 @@ async def send_reply(req: SupportSendRequest, db: Session = Depends(get_db)):
     """Send an approved reply to a ticket via Ticimax SOAP."""
     try:
         result = await _send_ticket_reply(
-            db=db, site_id=req.site_id, ticket_id=req.ticket_id,
-            message=req.message, staff_uye_id=req.staff_uye_id,
+            db=db,
+            site_id=req.site_id,
+            ticket_id=req.ticket_id,
+            message=req.message,
+            staff_uye_id=req.staff_uye_id,
         )
         return result
     except Exception as e:

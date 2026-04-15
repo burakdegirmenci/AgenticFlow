@@ -1,4 +1,5 @@
 """AI extract node - structured data extraction from free-form text."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -92,9 +93,7 @@ class AIExtractNode(BaseNode):
         instructions = str(config.get("instructions", "")).strip()
 
         field_desc = "\n".join(f"- {name}: {ftype}" for name, ftype in fields)
-        example_obj = {
-            name: _example_for(ftype) for name, ftype in fields
-        }
+        example_obj = {name: _example_for(ftype) for name, ftype in fields}
         import json as _json
 
         system = (

@@ -1,4 +1,5 @@
 """If (conditional branch) node - routes flow along true/false edges."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext

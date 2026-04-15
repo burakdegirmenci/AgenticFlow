@@ -1,4 +1,5 @@
 """Fernet-based encryption for site credentials."""
+
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.config import get_settings
@@ -14,8 +15,8 @@ class CryptoService:
             if not settings.MASTER_KEY:
                 raise RuntimeError(
                     "MASTER_KEY not set in .env. Generate one with: "
-                    "python -c \"from cryptography.fernet import Fernet; "
-                    "print(Fernet.generate_key().decode())\""
+                    'python -c "from cryptography.fernet import Fernet; '
+                    'print(Fernet.generate_key().decode())"'
                 )
             cls._fernet = Fernet(settings.MASTER_KEY.encode())
         return cls._fernet

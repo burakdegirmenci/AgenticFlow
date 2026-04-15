@@ -1,4 +1,5 @@
 """Manual trigger - workflow starts here when user clicks Run."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -32,6 +33,7 @@ class ManualTriggerNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         from datetime import datetime
+
         return {
             "triggered_at": datetime.utcnow().isoformat(),
             "input": context.trigger_input,

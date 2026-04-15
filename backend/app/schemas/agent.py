@@ -1,4 +1,5 @@
 """Pydantic schemas for the agent chat API."""
+
 from datetime import datetime
 from typing import Any
 

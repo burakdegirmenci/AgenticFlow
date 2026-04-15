@@ -1,4 +1,5 @@
 """BaseNode abstract class - all workflow nodes inherit from this."""
+
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
 
@@ -13,12 +14,12 @@ class BaseNode(ABC):
     """
 
     # Identity
-    type_id: ClassVar[str]           # "ticimax.urun.select"
-    category: ClassVar[str]          # "trigger"|"ticimax"|"transform"|"logic"|"ai"|"output"
-    display_name: ClassVar[str]      # "Ürün Listele"
+    type_id: ClassVar[str]  # "ticimax.urun.select"
+    category: ClassVar[str]  # "trigger"|"ticimax"|"transform"|"logic"|"ai"|"output"
+    display_name: ClassVar[str]  # "Ürün Listele"
     description: ClassVar[str] = ""  # Short help text
-    icon: ClassVar[str] = "box"      # lucide-react icon name
-    color: ClassVar[str] = "#6b7280" # Hex color
+    icon: ClassVar[str] = "box"  # lucide-react icon name
+    color: ClassVar[str] = "#6b7280"  # Hex color
 
     # JSON Schema definitions
     input_schema: ClassVar[dict] = {"type": "object", "properties": {}}

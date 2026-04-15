@@ -1,4 +1,5 @@
 """Pydantic schemas for the settings API."""
+
 from pydantic import BaseModel, Field
 
 

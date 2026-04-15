@@ -5,6 +5,7 @@ expression and the trigger time. The actual scheduling happens in
 ``SchedulerService`` which reads the config at workflow activation time and
 registers an APScheduler ``CronTrigger`` job.
 """
+
 from datetime import datetime
 from typing import Any
 
@@ -43,8 +44,7 @@ class ScheduleTriggerNode(BaseNode):
                 "type": "string",
                 "title": "Saat Dilimi",
                 "description": (
-                    "IANA timezone adı. Boş bırakılırsa UTC. "
-                    "Türkiye için: 'Europe/Istanbul'."
+                    "IANA timezone adı. Boş bırakılırsa UTC. Türkiye için: 'Europe/Istanbul'."
                 ),
                 "default": "Europe/Istanbul",
             },

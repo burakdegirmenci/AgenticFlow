@@ -3,9 +3,10 @@
 Used by ``transform.only_new`` node to filter a list of items down to the ones
 that have not been observed in prior runs of the same workflow/node.
 """
+
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, UniqueConstraint
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base

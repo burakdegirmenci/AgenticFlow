@@ -1,4 +1,5 @@
 """Workflows CRUD + run."""
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -15,7 +16,6 @@ from app.schemas.workflow import (
     WorkflowUpdate,
 )
 from app.services.scheduler_service import scheduler_service
-
 
 router = APIRouter()
 
@@ -62,9 +62,7 @@ def get_workflow(workflow_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{workflow_id}", response_model=WorkflowOut)
-def update_workflow(
-    workflow_id: int, payload: WorkflowUpdate, db: Session = Depends(get_db)
-):
+def update_workflow(workflow_id: int, payload: WorkflowUpdate, db: Session = Depends(get_db)):
     wf = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not wf:
         raise HTTPException(status_code=404, detail="Workflow not found")

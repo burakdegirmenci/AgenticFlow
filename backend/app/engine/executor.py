@@ -3,6 +3,7 @@
 MVP: Tek worker, sıralı topological execution. Her node için ExecutionStep
 DB'ye düşer. Hata → step ERROR, execution ERROR. Parallel/retry/loop Faz 3.
 """
+
 import time
 from datetime import datetime
 from typing import Any
@@ -10,14 +11,13 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.engine.context import ExecutionContext
-from app.engine.errors import GraphError, NodeError
+from app.engine.errors import GraphError
 from app.models.execution import (
     Execution,
     ExecutionStatus,
     ExecutionStep,
     TriggerType,
 )
-from app.models.site import Site
 from app.models.workflow import Workflow
 
 
@@ -55,14 +55,10 @@ class WorkflowExecutor:
         FastAPI BackgroundTask. The background task gets a fresh DB session
         and calls this method.
         """
-        execution = (
-            self.db.query(Execution).filter(Execution.id == execution_id).first()
-        )
+        execution = self.db.query(Execution).filter(Execution.id == execution_id).first()
         if not execution:
             return None
-        workflow = (
-            self.db.query(Workflow).filter(Workflow.id == execution.workflow_id).first()
-        )
+        workflow = self.db.query(Workflow).filter(Workflow.id == execution.workflow_id).first()
         if not workflow:
             execution.status = ExecutionStatus.ERROR
             execution.error = "Workflow not found"
@@ -93,9 +89,7 @@ class WorkflowExecutor:
             trigger_input=trigger_input,
             initial_status=ExecutionStatus.RUNNING,
         )
-        return await self._execute_graph(
-            workflow, execution, trigger_input=trigger_input or {}
-        )
+        return await self._execute_graph(workflow, execution, trigger_input=trigger_input or {})
 
     async def _execute_graph(
         self,
@@ -143,9 +137,7 @@ class WorkflowExecutor:
 
             # Skip if all parents were skipped or their branches do not reach us
             incoming = [e for e in edges if e.get("target") == node_id]
-            if incoming and not self._has_active_incoming(
-                incoming, skipped_nodes, context
-            ):
+            if incoming and not self._has_active_incoming(incoming, skipped_nodes, context):
                 skipped_nodes.add(node_id)
                 self._record_step(
                     execution.id,
@@ -159,17 +151,14 @@ class WorkflowExecutor:
             node_cls = NODE_REGISTRY.get(node_type)
             if node_cls is None:
                 self._record_step_error(
-                    execution.id, node_id, node_type,
-                    f"Unknown node type: {node_type}"
+                    execution.id, node_id, node_type, f"Unknown node type: {node_type}"
                 )
                 execution.status = ExecutionStatus.ERROR
                 execution.error = f"Unknown node type: {node_type}"
                 break
 
             # Gather inputs from parent edges (skipped parents excluded)
-            parent_outputs = self._collect_parent_outputs(
-                node_id, edges, context, skipped_nodes
-            )
+            parent_outputs = self._collect_parent_outputs(node_id, edges, context, skipped_nodes)
 
             step = ExecutionStep(
                 execution_id=execution.id,
@@ -191,9 +180,7 @@ class WorkflowExecutor:
                     getattr(node_cls, "config_schema", None),
                 )
                 context.current_node_id = node_id
-                output = await node_instance.execute(
-                    context, parent_outputs, resolved_config
-                )
+                output = await node_instance.execute(context, parent_outputs, resolved_config)
                 context.set_node_output(node_id, output)
 
                 step.status = ExecutionStatus.SUCCESS
@@ -223,9 +210,7 @@ class WorkflowExecutor:
     # -----------------------------------------------------------------------
     # Helpers
     # -----------------------------------------------------------------------
-    def _topological_sort(
-        self, nodes_by_id: dict[str, dict], edges: list[dict]
-    ) -> list[str]:
+    def _topological_sort(self, nodes_by_id: dict[str, dict], edges: list[dict]) -> list[str]:
         """Kahn's algorithm - raise GraphError on cycle."""
         in_degree: dict[str, int] = {nid: 0 for nid in nodes_by_id}
         adj: dict[str, list[str]] = {nid: [] for nid in nodes_by_id}
@@ -302,11 +287,7 @@ class WorkflowExecutor:
         for edge in edges:
             if edge.get("target") == node_id:
                 src = edge.get("source")
-                if (
-                    src
-                    and src not in skipped_nodes
-                    and src in context.node_outputs
-                ):
+                if src and src not in skipped_nodes and src in context.node_outputs:
                     parents[src] = context.node_outputs[src]
         return parents
 
@@ -352,6 +333,7 @@ class WorkflowExecutor:
         """Ensure the value is JSON-serializable (best effort)."""
         try:
             import json
+
             json.dumps(value, default=str)
             return value
         except Exception:

@@ -1,4 +1,5 @@
-import sys, json, urllib.request
+import json
+import urllib.request
 
 req = urllib.request.Request("http://localhost:8000/api/executions/153")
 with urllib.request.urlopen(req) as resp:

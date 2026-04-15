@@ -6,6 +6,7 @@ Mirrors csv_export's discovery rules:
 
 Output lands in `<backend cwd>/exports/<filename>_<YYYYMMDD_HHMMSS>.xlsx`.
 """
+
 import os
 from datetime import date, datetime
 from typing import Any

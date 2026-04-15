@@ -5,18 +5,20 @@ workflow graph. On providers that support structured tools (anthropic_api,
 google_genai), we use a `propose_workflow` tool call. On text-only providers
 (anthropic_cli), we instruct the model to emit a JSON code-fence and parse it.
 """
+
 from __future__ import annotations
 
 import json
 import re
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.models.chat import ChatMessage, ChatSession
 from app.nodes import NODE_REGISTRY
 from app.services.llm import LLMProviderError, get_provider
-from app.services.llm.base import LLMEvent, LLMMessage
+from app.services.llm.base import LLMMessage
 
 
 # ---------------------------------------------------------------------------
@@ -41,9 +43,18 @@ def _node_catalog_summary() -> str:
             def _score(pair: tuple[str, str]) -> int:
                 name = pair[0].lower()
                 for i, kw in enumerate(
-                    ["select_urun", "select_siparis", "save_urun",
-                     "set_siparis", "update_urun", "select", "save",
-                     "set_", "update_", "get_"]
+                    [
+                        "select_urun",
+                        "select_siparis",
+                        "save_urun",
+                        "set_siparis",
+                        "update_urun",
+                        "select",
+                        "save",
+                        "set_",
+                        "update_",
+                        "get_",
+                    ]
                 ):
                     if kw in name:
                         return i
@@ -323,9 +334,7 @@ async def stream_chat(
             session_id,
             "assistant",
             accumulated_text,
-            tool_use=(
-                {"propose_workflow": found_proposal} if found_proposal else None
-            ),
+            tool_use=({"propose_workflow": found_proposal} if found_proposal else None),
         )
     except Exception as e:
         yield {"type": "error", "message": f"DB persist error: {e}"}
@@ -344,7 +353,7 @@ def _normalize_proposal(raw: dict[str, Any]) -> dict[str, Any]:
     for i, n in enumerate(nodes_in):
         if not isinstance(n, dict):
             continue
-        nid = str(n.get("id") or f"n{i+1}")
+        nid = str(n.get("id") or f"n{i + 1}")
         ntype = str(n.get("type") or "")
         pos = n.get("position") or {"x": 100 + i * 220, "y": 120}
         data = n.get("data") or {}
@@ -364,7 +373,7 @@ def _normalize_proposal(raw: dict[str, Any]) -> dict[str, Any]:
             continue
         edges.append(
             {
-                "id": str(e.get("id") or f"e{i+1}"),
+                "id": str(e.get("id") or f"e{i + 1}"),
                 "source": str(e.get("source") or ""),
                 "target": str(e.get("target") or ""),
                 "sourceHandle": e.get("sourceHandle"),

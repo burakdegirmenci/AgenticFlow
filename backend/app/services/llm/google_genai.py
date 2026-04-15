@@ -1,7 +1,9 @@
 """Google Gemini provider via google-genai SDK (API key)."""
+
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.services.llm import register
 from app.services.llm.base import (
@@ -11,7 +13,6 @@ from app.services.llm.base import (
     LLMProviderError,
     LLMResponse,
 )
-
 
 # Keys we strip from JSON Schemas before passing to Gemini's FunctionDeclaration
 # (Gemini's Schema type has a smaller surface than JSON Schema / Anthropic).
@@ -57,9 +58,7 @@ def _sanitize_schema_for_gemini(schema: Any) -> Any:
                 out["nullable"] = True
             continue
         if key == "properties" and isinstance(value, dict):
-            out["properties"] = {
-                k: _sanitize_schema_for_gemini(v) for k, v in value.items()
-            }
+            out["properties"] = {k: _sanitize_schema_for_gemini(v) for k, v in value.items()}
             continue
         if key == "items":
             out["items"] = _sanitize_schema_for_gemini(value)
@@ -77,9 +76,7 @@ def _sanitize_schema_for_gemini(schema: Any) -> Any:
                 for fk, fv in first.items():
                     out.setdefault(fk, fv)
                 # Mark nullable if any branch was null
-                if any(
-                    isinstance(s, dict) and s.get("type") == "null" for s in value
-                ):
+                if any(isinstance(s, dict) and s.get("type") == "null" for s in value):
                     out["nullable"] = True
             continue
         out[key] = value
@@ -100,9 +97,7 @@ class GoogleGenAIProvider(LLMProvider):
 
         key = get_llm_setting("GOOGLE_API_KEY")
         if not key:
-            raise LLMProviderError(
-                "GOOGLE_API_KEY is not configured. Add it in Settings or .env."
-            )
+            raise LLMProviderError("GOOGLE_API_KEY is not configured. Add it in Settings or .env.")
         try:
             from google import genai
         except ImportError as e:

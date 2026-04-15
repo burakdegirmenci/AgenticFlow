@@ -12,6 +12,7 @@ every successful update.
 Supports ``dry_run`` config — when true, nothing is sent to Ticimax
 but the node still iterates and returns what it would have written.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -237,9 +238,7 @@ class UrunUpdateAciklamaBatchNode(BaseNode):
                         }
                     )
                     if consecutive_errors >= abort_threshold:
-                        return self._abort(
-                            out_results, updated, errors, skipped, dry_run
-                        )
+                        return self._abort(out_results, updated, errors, skipped, dry_run)
 
             if delay_sec > 0 and idx < len(items) - 1:
                 await asyncio.sleep(delay_sec)
@@ -283,11 +282,7 @@ class UrunUpdateAciklamaBatchNode(BaseNode):
         skipped: int,
         dry_run: bool,
     ) -> dict[str, Any]:
-        last_errors = [
-            r.get("error", "?")
-            for r in out_results[-3:]
-            if r.get("status") == "error"
-        ]
+        last_errors = [r.get("error", "?") for r in out_results[-3:] if r.get("status") == "error"]
         raise NodeError(
             "",
             self.type_id,

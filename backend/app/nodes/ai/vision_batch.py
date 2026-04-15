@@ -9,6 +9,7 @@ Supports Anthropic Claude (URL image sources) and Google Gemini
 (downloaded image bytes). Bypasses the LLMProvider abstraction because
 LLMMessage.content is str-only.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -77,8 +78,7 @@ class AIVisionBatchNode(BaseNode):
                 "type": "string",
                 "title": "Görsel Path (item içinde)",
                 "description": (
-                    "Her item içindeki görsel URL listesinin yolu. "
-                    "Örn: Resimler.string"
+                    "Her item içindeki görsel URL listesinin yolu. Örn: Resimler.string"
                 ),
                 "default": "Resimler.string",
             },
@@ -312,9 +312,7 @@ class AIVisionBatchNode(BaseNode):
                 error_count += 1
                 consecutive_errors += 1
                 if consecutive_errors >= abort_threshold:
-                    return self._abort_result(
-                        results, success_count, error_count, skipped_count
-                    )
+                    return self._abort_result(results, success_count, error_count, skipped_count)
 
             if delay_sec > 0 and idx < len(items) - 1:
                 await asyncio.sleep(delay_sec)
@@ -336,11 +334,7 @@ class AIVisionBatchNode(BaseNode):
         skipped_count: int,
     ) -> dict[str, Any]:
         """Raise NodeError with partial results attached in the message."""
-        last_errors = [
-            r.get("error", "?")
-            for r in results[-3:]
-            if r.get("error")
-        ]
+        last_errors = [r.get("error", "?") for r in results[-3:] if r.get("error")]
         raise NodeError(
             "",
             self.type_id,
@@ -352,9 +346,7 @@ class AIVisionBatchNode(BaseNode):
 
     # ------------------------------------------------------------------
     @staticmethod
-    def _resolve_input_items(
-        inputs: dict[str, Any], config: dict[str, Any]
-    ) -> list[Any]:
+    def _resolve_input_items(inputs: dict[str, Any], config: dict[str, Any]) -> list[Any]:
         """Resolve the list of items to iterate over.
 
         Priority:
@@ -428,22 +420,18 @@ class AIVisionBatchNode(BaseNode):
         max_tokens: int,
         temperature: float,
     ) -> tuple[str, dict[str, Any], str]:
-        from app.services.settings_service import get_llm_setting
         from anthropic import AsyncAnthropic
+
+        from app.services.settings_service import get_llm_setting
 
         api_key = get_llm_setting("ANTHROPIC_API_KEY")
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY missing")
 
-        model = (
-            model_override
-            or get_llm_setting("CLAUDE_MODEL_NODE")
-            or "claude-opus-4-6"
-        )
+        model = model_override or get_llm_setting("CLAUDE_MODEL_NODE") or "claude-opus-4-6"
         client = AsyncAnthropic(api_key=api_key)
         content_blocks: list[dict[str, Any]] = [
-            {"type": "image", "source": {"type": "url", "url": url}}
-            for url in image_urls
+            {"type": "image", "source": {"type": "url", "url": url}} for url in image_urls
         ]
         content_blocks.append({"type": "text", "text": prompt})
 
@@ -455,9 +443,7 @@ class AIVisionBatchNode(BaseNode):
             messages=[{"role": "user", "content": content_blocks}],
         )
         text = "".join(
-            getattr(b, "text", "")
-            for b in resp.content
-            if getattr(b, "type", None) == "text"
+            getattr(b, "text", "") for b in resp.content if getattr(b, "type", None) == "text"
         )
         usage: dict[str, Any] = {}
         if getattr(resp, "usage", None):
@@ -476,26 +462,21 @@ class AIVisionBatchNode(BaseNode):
         max_tokens: int,
         temperature: float,
     ) -> tuple[str, dict[str, Any], str]:
-        from app.services.settings_service import get_llm_setting
+        import httpx
         from google import genai
         from google.genai import types as genai_types
-        import httpx
+
+        from app.services.settings_service import get_llm_setting
 
         api_key = get_llm_setting("GOOGLE_API_KEY")
         if not api_key:
             raise RuntimeError("GOOGLE_API_KEY missing")
 
-        model = (
-            model_override
-            or get_llm_setting("GEMINI_MODEL_NODE")
-            or "gemini-2.5-flash"
-        )
+        model = model_override or get_llm_setting("GEMINI_MODEL_NODE") or "gemini-2.5-flash"
 
         async def fetch(url: str) -> tuple[bytes, str] | None:
             try:
-                async with httpx.AsyncClient(
-                    follow_redirects=True, timeout=30.0
-                ) as http:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as http:
                     r = await http.get(url)
                     r.raise_for_status()
                     mime = r.headers.get("content-type", "").split(";")[0].strip()
@@ -513,13 +494,10 @@ class AIVisionBatchNode(BaseNode):
             # Special marker — vision_batch main loop treats this as a
             # per-item skip, not an API error, so the abort counter for
             # real service failures stays clean.
-            raise _ImagesUnavailable(
-                f"all {len(image_urls)} image URLs failed to fetch"
-            )
+            raise _ImagesUnavailable(f"all {len(image_urls)} image URLs failed to fetch")
         client = genai.Client(api_key=api_key)
         parts: list[Any] = [
-            genai_types.Part.from_bytes(data=data, mime_type=mime)
-            for data, mime in results
+            genai_types.Part.from_bytes(data=data, mime_type=mime) for data, mime in results
         ]
         parts.append(genai_types.Part.from_text(text=prompt))
         contents = [genai_types.Content(role="user", parts=parts)]
@@ -530,16 +508,12 @@ class AIVisionBatchNode(BaseNode):
             "system_instruction": system or None,
         }
         try:
-            cfg_kwargs["thinking_config"] = genai_types.ThinkingConfig(
-                thinking_budget=0
-            )
+            cfg_kwargs["thinking_config"] = genai_types.ThinkingConfig(thinking_budget=0)
         except Exception:
             pass
         cfg = genai_types.GenerateContentConfig(**cfg_kwargs)
 
-        resp = await client.aio.models.generate_content(
-            model=model, contents=contents, config=cfg
-        )
+        resp = await client.aio.models.generate_content(model=model, contents=contents, config=cfg)
         text_parts: list[str] = []
         for candidate in resp.candidates or []:
             content = getattr(candidate, "content", None)

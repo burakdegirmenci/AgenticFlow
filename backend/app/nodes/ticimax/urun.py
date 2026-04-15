@@ -1,4 +1,5 @@
 """Ticimax product nodes - manually optimized for MVP."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -116,9 +117,7 @@ class UrunSelectNode(BaseNode):
             SiralamaYonu=config.get("siralama_yonu", "Desc"),
         )
 
-        urunler = client.urun.SelectUrun(
-            UyeKodu=client.uye_kodu, f=filtre, s=sayfalama
-        )
+        urunler = client.urun.SelectUrun(UyeKodu=client.uye_kodu, f=filtre, s=sayfalama)
 
         if urunler is None:
             urunler_list = []
@@ -129,6 +128,7 @@ class UrunSelectNode(BaseNode):
 
         # Serialize zeep objects to plain dicts
         from ticimax_client import serialize_zeep_object  # type: ignore
+
         serialized = [serialize_zeep_object(u) for u in urunler_list]
 
         return {

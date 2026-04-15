@@ -1,13 +1,13 @@
 """Sites CRUD + connection test."""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.site import Site
-from app.schemas.site import SiteCreate, SiteOut, SiteUpdate, SiteConnectionTest
+from app.schemas.site import SiteConnectionTest, SiteCreate, SiteOut, SiteUpdate
 from app.services.crypto_service import CryptoService
 from app.services.ticimax_service import TicimaxService
-
 
 router = APIRouter()
 
@@ -40,9 +40,7 @@ def get_site(site_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{site_id}", response_model=SiteOut)
-def update_site(
-    site_id: int, payload: SiteUpdate, db: Session = Depends(get_db)
-):
+def update_site(site_id: int, payload: SiteUpdate, db: Session = Depends(get_db)):
     site = db.query(Site).filter(Site.id == site_id).first()
     if not site:
         raise HTTPException(status_code=404, detail="Site not found")

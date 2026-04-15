@@ -1,9 +1,10 @@
 """Agent chat API — SSE streaming for workflow generator."""
+
 from __future__ import annotations
 
 import asyncio
 import json
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -20,7 +21,6 @@ from app.schemas.agent import (
 from app.services import agent_service
 from app.services.llm import available_providers, get_provider
 
-
 router = APIRouter()
 
 
@@ -29,9 +29,7 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 @router.post("/sessions", response_model=SessionOut)
 def create_session(req: SessionCreateRequest, db: Session = Depends(get_db)):
-    return agent_service.create_session(
-        db, title=req.title, workflow_id=req.workflow_id
-    )
+    return agent_service.create_session(db, title=req.title, workflow_id=req.workflow_id)
 
 
 @router.get("/sessions", response_model=list[SessionOut])
@@ -134,7 +132,7 @@ async def chat_stream(req: ChatRequest, db: Session = Depends(get_db)):
     async def event_source() -> AsyncIterator[bytes]:
         # Emit session id first so the client can track new sessions
         first = {"type": "session", "session_id": session_id}
-        yield f"data: {json.dumps(first, ensure_ascii=False)}\n\n".encode("utf-8")
+        yield f"data: {json.dumps(first, ensure_ascii=False)}\n\n".encode()
         try:
             async for event in agent_service.stream_chat(
                 db=db,
@@ -148,14 +146,14 @@ async def chat_stream(req: ChatRequest, db: Session = Depends(get_db)):
                 if event.get("type") == "session":
                     continue
                 payload = json.dumps(event, ensure_ascii=False)
-                yield f"data: {payload}\n\n".encode("utf-8")
+                yield f"data: {payload}\n\n".encode()
                 # Give the event loop a chance to flush
                 await asyncio.sleep(0)
         except asyncio.CancelledError:
             return
         except Exception as e:
             err = {"type": "error", "message": f"stream failure: {e}"}
-            yield f"data: {json.dumps(err)}\n\n".encode("utf-8")
+            yield f"data: {json.dumps(err)}\n\n".encode()
             yield b'data: {"type": "done"}\n\n'
 
     return StreamingResponse(

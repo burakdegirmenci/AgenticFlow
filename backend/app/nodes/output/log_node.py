@@ -1,4 +1,5 @@
 """Log node - writes inputs to execution log (for debugging)."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -38,6 +39,7 @@ class LogNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         import json
+
         label = config.get("label", "log")
         max_length = int(config.get("max_length", 5000))
         try:

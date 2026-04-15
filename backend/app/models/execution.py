@@ -1,7 +1,9 @@
 """Workflow execution tracking."""
+
 import enum
 from datetime import datetime
-from sqlalchemy import String, DateTime, Integer, ForeignKey, Text, JSON, Enum
+
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -31,9 +33,7 @@ class Execution(Base):
     status: Mapped[ExecutionStatus] = mapped_column(
         Enum(ExecutionStatus), default=ExecutionStatus.PENDING
     )
-    trigger_type: Mapped[TriggerType] = mapped_column(
-        Enum(TriggerType), default=TriggerType.MANUAL
-    )
+    trigger_type: Mapped[TriggerType] = mapped_column(Enum(TriggerType), default=TriggerType.MANUAL)
     started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     input_data: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -45,8 +45,10 @@ class Execution(Base):
         "Workflow", back_populates="executions"
     )
     steps: Mapped[list["ExecutionStep"]] = relationship(
-        "ExecutionStep", back_populates="execution", cascade="all, delete-orphan",
-        order_by="ExecutionStep.started_at"
+        "ExecutionStep",
+        back_populates="execution",
+        cascade="all, delete-orphan",
+        order_by="ExecutionStep.started_at",
     )
 
 

@@ -1,4 +1,5 @@
 """AI prompt node - free-form completion against any LLM provider."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext

@@ -1,4 +1,5 @@
 """AI classify node - constrained text classification into a fixed label set."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -15,7 +16,9 @@ class AIClassifyNode(BaseNode):
     type_id = "ai.classify"
     category = "ai"
     display_name = "AI Sınıflandır"
-    description = "Metni verilen etiketlerden birine sınıflandırır. Destek ticket triage için ideal."
+    description = (
+        "Metni verilen etiketlerden birine sınıflandırır. Destek ticket triage için ideal."
+    )
     icon = "tag"
     color = "#2563EB"
 

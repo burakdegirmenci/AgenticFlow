@@ -4,6 +4,7 @@ Stores user-editable runtime settings (LLM provider, API keys, models).
 Sensitive values are stored Fernet-encrypted; the `encrypted` flag tells
 the service layer whether to decrypt on read.
 """
+
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text

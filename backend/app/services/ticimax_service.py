@@ -3,6 +3,7 @@
 Imports TicimaxClient directly from the skill path (same pattern as
 ProductDetail/worker/worker.py). No MCP protocol hop.
 """
+
 import os
 import sys
 from typing import Any
@@ -12,7 +13,6 @@ from sqlalchemy.orm import Session
 from app.models.site import Site
 from app.services.crypto_service import CryptoService
 from app.utils.zeep_helpers import fix_factories
-
 
 # --- Add skill scripts to sys.path (same as worker.py:28-32) -------------
 SKILL_SCRIPTS = os.path.join(

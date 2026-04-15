@@ -10,13 +10,13 @@ seeds the snapshot with the current IDs and returns ``new_items=[]``. This
 avoids a thundering-herd effect where the first activation would process every
 historical row. Set ``emit_on_first_run=true`` to opt out.
 """
+
 from datetime import datetime
 from typing import Any
 
 from app.engine.context import ExecutionContext
 from app.engine.node_base import BaseNode
 from app.nodes import register
-
 
 _MAX_REMEMBERED_IDS = 10_000
 

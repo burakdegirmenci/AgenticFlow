@@ -1,5 +1,7 @@
 """Pydantic schemas for Site API."""
+
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 

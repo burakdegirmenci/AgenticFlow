@@ -8,10 +8,11 @@ existing MASTER_KEY. Reads fall back to the environment-loaded
 Provider modules should call `get_llm_setting(key)` instead of reading
 `Settings` attributes directly so user changes apply without restart.
 """
+
 from __future__ import annotations
 
+from collections.abc import Iterable
 from threading import RLock
-from typing import Iterable
 
 from sqlalchemy.orm import Session
 
@@ -19,7 +20,6 @@ from app.config import get_settings
 from app.database import SessionLocal
 from app.models.app_setting import AppSetting
 from app.services.crypto_service import CryptoService
-
 
 # Keys that may be persisted via Settings UI. Anything else is rejected.
 LLM_KEYS: tuple[str, ...] = (
@@ -34,9 +34,7 @@ LLM_KEYS: tuple[str, ...] = (
 )
 
 # Keys that must always be encrypted at rest.
-SECRET_KEYS: frozenset[str] = frozenset(
-    {"ANTHROPIC_API_KEY", "GOOGLE_API_KEY"}
-)
+SECRET_KEYS: frozenset[str] = frozenset({"ANTHROPIC_API_KEY", "GOOGLE_API_KEY"})
 
 
 # ---------------------------------------------------------------------------

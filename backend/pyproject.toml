@@ -67,38 +67,34 @@ extend-exclude = [
     "venv",
     "alembic/versions",
     "app/nodes/ticimax/_auto_generated.py",  # generated code is formatted by the generator
+    "scripts/legacy_scripts",                # one-off scripts scheduled for deletion
 ]
 
 [tool.ruff.lint]
+# Ratchet strategy: start with the essentials, enable more per sprint as the
+# codebase is cleaned up. See docs/TASKS.md Sprint 4 for the plan to add
+# PL / S / RUF / ASYNC / PTH / ARG / RET / ERA.
 select = [
     "E",    # pycodestyle errors
     "W",    # pycodestyle warnings
     "F",    # pyflakes
     "I",    # isort
     "B",    # flake8-bugbear
-    "C4",   # flake8-comprehensions
     "SIM",  # flake8-simplify
     "UP",   # pyupgrade
-    "PL",   # pylint
-    "RUF",  # ruff-specific
-    "ASYNC",
-    "S",    # flake8-bandit (security)
-    "TID",  # flake8-tidy-imports
-    "PTH",  # flake8-use-pathlib
-    "PIE",
-    "ARG",
-    "RET",
-    "ERA",  # eradicate (no commented-out code)
 ]
 ignore = [
     "E501",    # line length handled by formatter
-    "PLR0913", # too many args — sometimes fine (executor, factories)
-    "PLR0912", # too many branches — executor is inherently branchy
-    "PLR2004", # magic values — frequent in config parsing
-    "S101",    # assert — fine in tests
+    "E741",    # ambiguous variable names in existing code — Sprint 4
     "B008",    # FastAPI Depends() in defaults is idiomatic
-    "S603",    # subprocess without shell=True — intentional for CLI path
-    "S607",    # starting process with partial path — CLI path is configurable
+    "B904",    # raise-from — noisy on existing code, Sprint 4
+    "F821",    # forward references inside strings are used by SQLAlchemy relationship()
+    "SIM103",  # return-condition-directly — style
+    "SIM105",  # contextlib.suppress — readable alternatives are fine
+    "SIM108",  # ternary vs if/else — style pref, sometimes else branch is clearer
+    "SIM118",  # dict.keys() in iter — cosmetic, Sprint 4
+    "UP038",   # tuple-in-isinstance — deprecated in newer Python anyway
+    "UP042",   # str+Enum vs StrEnum — codebase-wide refactor, Sprint 4
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -127,21 +123,22 @@ line-ending = "lf"
 docstring-code-format = true
 
 # =============================================================================
-# MyPy — strict type checking
+# MyPy — type checking (ratchet target: strict by Sprint 4)
 # =============================================================================
 [tool.mypy]
 python_version = "3.11"
-strict = true
 warn_unused_ignores = true
 warn_redundant_casts = true
-warn_return_any = true
 warn_unreachable = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
+check_untyped_defs = true         # type-check body of untyped functions
 no_implicit_optional = true
 namespace_packages = true
 explicit_package_bases = true
+# These land in Sprint 4 as functions get annotations:
+#   strict = true
+#   disallow_untyped_defs = true
+#   disallow_incomplete_defs = true
+#   warn_return_any = true
 exclude = [
     "^\\.venv/",
     "^venv/",

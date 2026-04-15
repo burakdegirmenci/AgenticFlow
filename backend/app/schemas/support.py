@@ -1,4 +1,5 @@
 """Pydantic schemas for the support API."""
+
 from pydantic import BaseModel, Field
 
 

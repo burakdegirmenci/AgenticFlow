@@ -5,6 +5,7 @@ emits an output containing the list. Downstream subgraph execution (parallel
 per-item) is Faz 3+. For now, this node passes through the list and provides
 a `count` so following transform nodes can operate on the whole batch.
 """
+
 from typing import Any
 
 from app.engine.context import ExecutionContext

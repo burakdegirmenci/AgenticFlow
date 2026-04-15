@@ -1,4 +1,5 @@
 """Execution history API."""
+
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -9,7 +10,6 @@ from app.database import get_db
 from app.models.execution import Execution, ExecutionStatus, TriggerType
 from app.models.workflow import Workflow
 from app.schemas.execution import ExecutionDetailOut, ExecutionOut
-
 
 router = APIRouter()
 

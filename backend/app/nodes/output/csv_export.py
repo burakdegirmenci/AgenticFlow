@@ -16,6 +16,7 @@ Finding the list of rows:
        shape `{"result": {"UrunList": [...], "Sayfalama": {...}}}` without
        any configuration.
 """
+
 import csv
 import os
 from datetime import datetime
@@ -62,11 +63,7 @@ def _find_first_list_of_dicts(obj: Any, max_depth: int = 6) -> list[dict] | None
     if isinstance(obj, dict):
         # First pass: shallow scan for a direct list-of-dicts child
         for v in obj.values():
-            if (
-                isinstance(v, list)
-                and v
-                and isinstance(v[0], dict)
-            ):
+            if isinstance(v, list) and v and isinstance(v[0], dict):
                 return v  # type: ignore[return-value]
         # Second pass: recurse into children
         for v in obj.values():
@@ -177,11 +174,7 @@ class CsvExportNode(BaseNode):
             for row in rows:
                 if isinstance(row, dict):
                     flat = {
-                        k: (
-                            v
-                            if isinstance(v, (str, int, float, bool)) or v is None
-                            else str(v)
-                        )
+                        k: (v if isinstance(v, (str, int, float, bool)) or v is None else str(v))
                         for k, v in row.items()
                     }
                     writer.writerow(flat)

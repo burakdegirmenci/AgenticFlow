@@ -1,4 +1,5 @@
 """Settings API — read/update user-editable LLM settings, test providers."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
@@ -13,7 +14,6 @@ from app.schemas.settings import (
 from app.services import settings_service
 from app.services.llm import available_providers, get_provider
 
-
 router = APIRouter()
 
 
@@ -21,16 +21,12 @@ def _build_out() -> LLMSettingsOut:
     eff = settings_service.get_all_effective()
     return LLMSettingsOut(
         LLM_PROVIDER=eff.get("LLM_PROVIDER", "anthropic_api") or "anthropic_api",
-        ANTHROPIC_API_KEY_masked=settings_service.mask_secret(
-            eff.get("ANTHROPIC_API_KEY", "")
-        ),
+        ANTHROPIC_API_KEY_masked=settings_service.mask_secret(eff.get("ANTHROPIC_API_KEY", "")),
         ANTHROPIC_API_KEY_set=bool(eff.get("ANTHROPIC_API_KEY")),
         CLAUDE_MODEL_AGENT=eff.get("CLAUDE_MODEL_AGENT", ""),
         CLAUDE_MODEL_NODE=eff.get("CLAUDE_MODEL_NODE", ""),
         CLAUDE_CLI_PATH=eff.get("CLAUDE_CLI_PATH", "claude") or "claude",
-        GOOGLE_API_KEY_masked=settings_service.mask_secret(
-            eff.get("GOOGLE_API_KEY", "")
-        ),
+        GOOGLE_API_KEY_masked=settings_service.mask_secret(eff.get("GOOGLE_API_KEY", "")),
         GOOGLE_API_KEY_set=bool(eff.get("GOOGLE_API_KEY")),
         GEMINI_MODEL_AGENT=eff.get("GEMINI_MODEL_AGENT", ""),
         GEMINI_MODEL_NODE=eff.get("GEMINI_MODEL_NODE", ""),
@@ -43,9 +39,7 @@ def get_llm_settings():
 
 
 @router.put("/llm", response_model=LLMSettingsOut)
-def update_llm_settings(
-    payload: LLMSettingsUpdate, db: Session = Depends(get_db)
-):
+def update_llm_settings(payload: LLMSettingsUpdate, db: Session = Depends(get_db)):
     # Only forward fields that were explicitly provided. None == untouched.
     incoming = {k: v for k, v in payload.model_dump().items() if v is not None}
     if incoming:

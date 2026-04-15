@@ -9,6 +9,7 @@ Rules (segment is variant if):
 - mixed alphanumeric (EA4, hz4)
 Single-char segments (R, 7) are preserved.
 """
+
 from typing import Any
 
 from app.engine.context import ExecutionContext
@@ -25,11 +26,7 @@ def _is_variant_segment(seg: str) -> bool:
         return True
     if seg.isalpha():
         return True
-    if (
-        seg.isalnum()
-        and any(c.isalpha() for c in seg)
-        and any(c.isdigit() for c in seg)
-    ):
+    if seg.isalnum() and any(c.isalpha() for c in seg) and any(c.isdigit() for c in seg):
         return True
     return False
 

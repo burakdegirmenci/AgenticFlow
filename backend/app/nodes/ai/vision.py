@@ -5,6 +5,7 @@ Gemini (via google-genai SDK, downloaded bytes). Bypasses the LLMProvider
 abstraction because LLMMessage.content is str-only and does not model
 image content blocks.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -85,8 +86,7 @@ class AIVisionNode(BaseNode):
                 "type": "string",
                 "title": "Kullanıcı Prompt'u",
                 "description": (
-                    "{{field}} syntax'ı ile input'a erişebilirsin. "
-                    "Örn: {{urunler.0.UrunAdi}}"
+                    "{{field}} syntax'ı ile input'a erişebilirsin. Örn: {{urunler.0.UrunAdi}}"
                 ),
                 "default": (
                     "Bu ürün görselleri için SEO uyumlu, satışa yönelik bir ürün "
@@ -140,8 +140,7 @@ class AIVisionNode(BaseNode):
             raise NodeError(
                 "",
                 self.type_id,
-                f"No image URLs found at path '{path}'. "
-                f"Resolved value: {type(raw).__name__}",
+                f"No image URLs found at path '{path}'. Resolved value: {type(raw).__name__}",
             )
 
         max_images = int(config.get("max_images", 4))
@@ -239,16 +238,11 @@ class AIVisionNode(BaseNode):
         except ImportError as e:
             raise NodeError("", self.type_id, f"anthropic SDK not installed: {e}")
 
-        model = (
-            model_override
-            or get_llm_setting("CLAUDE_MODEL_NODE")
-            or "claude-opus-4-6"
-        )
+        model = model_override or get_llm_setting("CLAUDE_MODEL_NODE") or "claude-opus-4-6"
 
         client = AsyncAnthropic(api_key=api_key)
         content_blocks: list[dict[str, Any]] = [
-            {"type": "image", "source": {"type": "url", "url": url}}
-            for url in image_urls
+            {"type": "image", "source": {"type": "url", "url": url}} for url in image_urls
         ]
         content_blocks.append({"type": "text", "text": prompt})
 
@@ -264,9 +258,7 @@ class AIVisionNode(BaseNode):
             raise NodeError("", self.type_id, f"Anthropic vision call failed: {e}")
 
         text_parts = [
-            getattr(b, "text", "")
-            for b in resp.content
-            if getattr(b, "type", None) == "text"
+            getattr(b, "text", "") for b in resp.content if getattr(b, "type", None) == "text"
         ]
         usage: dict[str, Any] = {}
         if getattr(resp, "usage", None):
@@ -300,11 +292,7 @@ class AIVisionNode(BaseNode):
         except ImportError as e:
             raise NodeError("", self.type_id, f"google-genai not installed: {e}")
 
-        model = (
-            model_override
-            or get_llm_setting("GEMINI_MODEL_NODE")
-            or "gemini-2.5-flash"
-        )
+        model = model_override or get_llm_setting("GEMINI_MODEL_NODE") or "gemini-2.5-flash"
 
         # Fetch image bytes in parallel
         try:
@@ -313,9 +301,7 @@ class AIVisionNode(BaseNode):
             raise NodeError("", self.type_id, f"httpx not installed: {e}")
 
         async def fetch(url: str) -> tuple[bytes, str]:
-            async with httpx.AsyncClient(
-                follow_redirects=True, timeout=30.0
-            ) as http:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as http:
                 r = await http.get(url)
                 r.raise_for_status()
                 mime = r.headers.get("content-type", "").split(";")[0].strip()
@@ -332,8 +318,7 @@ class AIVisionNode(BaseNode):
         client = genai.Client(api_key=api_key)
 
         parts: list[Any] = [
-            genai_types.Part.from_bytes(data=data, mime_type=mime)
-            for data, mime in results
+            genai_types.Part.from_bytes(data=data, mime_type=mime) for data, mime in results
         ]
         parts.append(genai_types.Part.from_text(text=prompt))
         contents = [genai_types.Content(role="user", parts=parts)]
@@ -346,9 +331,7 @@ class AIVisionNode(BaseNode):
         # Gemini 2.5 Flash uses reasoning tokens by default which eats into
         # max_output_tokens. Disable thinking so we get the full text budget.
         try:
-            cfg_kwargs["thinking_config"] = genai_types.ThinkingConfig(
-                thinking_budget=0
-            )
+            cfg_kwargs["thinking_config"] = genai_types.ThinkingConfig(thinking_budget=0)
         except Exception:
             pass  # Older SDK: ignore
         cfg = genai_types.GenerateContentConfig(**cfg_kwargs)

@@ -1,4 +1,5 @@
 """Switch (multi-branch) node - routes flow by a field's value."""
+
 from typing import Any
 
 from app.engine.context import ExecutionContext

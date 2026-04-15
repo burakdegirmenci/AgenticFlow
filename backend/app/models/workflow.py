@@ -1,6 +1,8 @@
 """Workflow model - graph JSON stored as dict."""
+
 from datetime import datetime
-from sqlalchemy import String, DateTime, Integer, ForeignKey, Boolean, Text, JSON
+
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base

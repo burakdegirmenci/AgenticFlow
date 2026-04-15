@@ -1,7 +1,9 @@
 """Anthropic API provider (official SDK, API key)."""
+
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.services.llm import register
 from app.services.llm.base import (
@@ -160,9 +162,7 @@ class AnthropicAPIProvider(LLMProvider):
 
                             try:
                                 current_tool["input"] = (
-                                    json.loads(current_tool_json)
-                                    if current_tool_json
-                                    else {}
+                                    json.loads(current_tool_json) if current_tool_json else {}
                                 )
                             except json.JSONDecodeError:
                                 current_tool["input"] = {"_raw": current_tool_json}

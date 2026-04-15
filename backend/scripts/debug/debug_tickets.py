@@ -1,6 +1,7 @@
 """Debug: inspect raw ticket data from Ticimax."""
+
 import json
-import sys
+
 import httpx
 
 r = httpx.get(

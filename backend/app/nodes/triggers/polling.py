@@ -7,6 +7,7 @@ query Ticimax for new items and then diff with ``transform.only_new``.
 Combine with a downstream Ticimax query node + ``transform.only_new`` to build
 a "watch for new orders" flow.
 """
+
 from datetime import datetime
 from typing import Any
 
