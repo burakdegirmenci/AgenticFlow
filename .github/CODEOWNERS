@@ -1,0 +1,15 @@
+# Every PR gets a review request from the maintainer.
+# Update this file if maintainers are added.
+
+*                           @burakdegirmenci
+
+# Docs drift is catastrophic; route doc-only changes to the maintainer too.
+/docs/                      @burakdegirmenci
+/README.md                  @burakdegirmenci
+/CHANGELOG.md               @burakdegirmenci
+/SECURITY.md                @burakdegirmenci
+/CONTRIBUTING.md            @burakdegirmenci
+/llms.txt                   @burakdegirmenci
+
+# CI is infrastructure — changes need extra care.
+/.github/                   @burakdegirmenci

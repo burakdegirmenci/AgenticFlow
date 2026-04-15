@@ -1,0 +1,64 @@
+name: Feature request
+description: Propose a new feature, node, or UX improvement.
+title: "[feat] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting, please check `docs/SPECIFICATION.md` to confirm the
+        request aligns with the project's non-goals, and `docs/TASKS.md` to see
+        if it's already on the roadmap.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem this solves
+      description: What is painful or missing today? Who feels it?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: |
+        How should AgenticFlow behave once this ships? Include user-facing
+        behavior, and — if you've thought about it — rough implementation
+        notes (new nodes, API endpoints, UI panels, etc.).
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why you rejected them.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - New node (Ticimax)
+        - New node (AI / transform / logic / output)
+        - New trigger type
+        - Canvas / UX
+        - Agent chat / LLM
+        - Platform adapter (İkas / Shopify / WooCommerce)
+        - Observability / logging
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I have checked `docs/SPECIFICATION.md` §2.2 (non-goals).
+          required: true
+        - label: I have checked `docs/TASKS.md` for overlap.
+          required: true
