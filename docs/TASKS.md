@@ -164,13 +164,27 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
   - CI `--cov-fail-under=60+` after Sprint 5
 
 ### Sprint 5 — Observability & Logging + Code Hygiene
-- [ ] Structured JSON logging via `python-json-logger`
-- [ ] Log rotation (stdlib `RotatingFileHandler`)
-- [ ] Request logging middleware (method, path, ms, status, request_id)
-- [ ] Per-execution log record (execution_id, workflow_id, trigger, duration)
-- [ ] Optional Sentry DSN via env (`SENTRY_DSN`)
-- [ ] `/metrics` endpoint (plaintext counters: executions_total, scheduler_jobs, steps_failed_total)
-- [ ] **Migrate `datetime.utcnow()` → `datetime.now(UTC)`** (Python 3.12 deprecation; currently filtered in pytest)
+- [x] Structured JSON logging via `python-json-logger` (`app/logging_config.py` — idempotent `setup_logging()`, secret-key redaction filter for `api_key` / `secret` / `password` / `token` / `uye_kodu` / `master_key` / `sentry_dsn`)
+- [x] Log rotation — stdlib `RotatingFileHandler` at `logs/agenticflow.log`, 10 MB × 5 backups; stdout handler also installed
+- [x] Request logging middleware (`app/middleware/logging.py`) — one JSON line per HTTP request with method / path / status_code / duration_ms / request_id; `X-Request-ID` header echoed back; `/health` + `/metrics` silenced
+- [x] Per-execution log record — executor emits `execution_finished` with status / step_count / duration_ms and `execution_step_failed` on first error
+- [x] Optional Sentry DSN via env — `SENTRY_DSN` setting + new `[project.optional-dependencies] sentry` extra; app warns + continues if extra not installed
+- [x] `/metrics` endpoint (Prometheus text exposition) with three labeled counters: `agenticflow_requests_total` (method/status), `agenticflow_executions_total` (trigger/status), `agenticflow_execution_steps_total` (node_type/status). Thread-safe in-process registry (`app/metrics.py`); no Prometheus client dep.
+- [x] `datetime.utcnow()` → `utcnow()` helper (`app/utils/time.py`, timezone-naive UTC) across 14 call sites + 10 model defaults; pytest deprecation filter removed.
+- [x] 18 → 0 mypy errors (the baseline config is now a hard gate in CI):
+  - 4 unused `type: ignore` comments removed
+  - 3 unreachable statements fixed via widening `rows: list[Any]` and `_find_first_list_of_dicts -> list[Any] | None`
+  - `database.get_db()` return type `Iterator[Session]`
+  - `routers/agent.py` Optional-assignment dance rewritten
+  - `llm/anthropic_cli.py` stdout `None` guard
+  - `llm/base.py` `stream()` signature: `def ... -> AsyncIterator` (was `async def`) — fixes 3 subclass override errors
+  - 2 Anthropic SDK TypedDict mismatches suppressed with inline rationale
+  - `sentry_sdk` + `pythonjsonlogger` added to `[[tool.mypy.overrides]] ignore_missing_imports`
+- [x] Router smoke tests with FastAPI `TestClient` (10 tests: `/`, `/health`, `/metrics` Prometheus text + content-type, X-Request-ID echo + generation, `/api/nodes` catalog shape, sites CRUD, workflows CRUD)
+- [x] Unit tests: 7 for metrics, 4 for logging config
+- [x] CI: MyPy step promoted from `continue-on-error` to a required gate
+- [x] Coverage: 35.8% → **47.8%** · `fail_under` 35 → 45
+- [x] Test count: 129 → 150 (+21)
 
 ### Sprint 6 — Prod Readiness
 - [ ] `Dockerfile` (multistage: builder → runtime)
