@@ -165,7 +165,8 @@ kısayolu oluşturulur. Kısayola çift tıklayarak BASLAT menüsünü açabilir
 ## Kullanım Akışı
 
 1. **Site ekle** — UI > Sites > "+ Yeni Site". Domain (`demo.example.com`) ve
-   üye kodu (`FON5...`) gir; "Bağlantıyı test et" ile doğrula.
+   üye kodu (Ticimax panelinden alacağınız 32 karakterlik token) gir;
+   "Bağlantıyı test et" ile doğrula.
 2. **Workflow oluştur** — UI > Workflows > "+ Yeni". Site seç, isim ver.
 3. **Canvas'ta tasarla** — Sol panelden node sürükle, edge ile bağla, sağ
    panelden config gir. Veya:

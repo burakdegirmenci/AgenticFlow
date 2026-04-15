@@ -83,7 +83,7 @@ export default function Sites() {
                 label="Üye Kodu"
                 value={form.uye_kodu}
                 onChange={(v) => setForm((f) => ({ ...f, uye_kodu: v }))}
-                placeholder="FONxXXXXXXXXX..."
+                placeholder="Ticimax üye kodu (32 karakter)"
                 type="password"
               />
             </div>

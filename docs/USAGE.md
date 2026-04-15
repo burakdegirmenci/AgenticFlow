@@ -14,7 +14,7 @@ UI'da sol sidebar'dan **Sites** > **+ Yeni Site**.
 |---|---|
 | İsim | `Demo Store` |
 | Domain | `demo.example.com` (`http://` veya `/` olmadan) |
-| Üye Kodu | `FONxXXXXXXXXXXXXXXXXXXXXXXXXXX` |
+| Üye Kodu | `FONxXXXXXXXXXXXXXXXXXXXXXXXXXX` (Ticimax panelinden alın — 32 karakter) |
 
 **Kaydet** > listeden sitenize tıklayıp **"Bağlantıyı test et"**. Yeşil
 checkmark görmeniz gerekir. Üye kodu Fernet ile şifrelenir, plain text DB'ye
