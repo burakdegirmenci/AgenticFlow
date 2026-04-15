@@ -45,8 +45,10 @@ def _init_sentry_if_configured() -> None:
     if not settings.SENTRY_DSN:
         return
     try:
-        import sentry_sdk  # type: ignore[import-not-found]
-        from sentry_sdk.integrations.fastapi import FastApiIntegration  # type: ignore[import-not-found]
+        # SDK lives in the optional `sentry` extra — mypy ignore configured
+        # globally via [[tool.mypy.overrides]] in pyproject.toml.
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
     except ImportError:
         logger.warning(
             "sentry_sdk_not_installed",

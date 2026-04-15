@@ -159,6 +159,8 @@ module = [
     "zeep.*",
     "apscheduler.*",
     "openpyxl.*",
+    "sentry_sdk.*",                   # optional extra; stubs installed only if extra is
+    "pythonjsonlogger.*",             # no official stubs
 ]
 ignore_missing_imports = true
 
