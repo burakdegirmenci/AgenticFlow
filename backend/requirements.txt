@@ -1,17 +1,44 @@
+# Runtime dependencies for the backend Docker image.
+# Single source of truth for production runtime is pyproject.toml; this file
+# is the lockfile-equivalent that pip installs into the image. Keep it in
+# sync with [project.dependencies] in pyproject.toml.
+#
+# Test deps (pytest, pytest-*) are intentionally included so the image can
+# also serve as a CI runner if desired; remove them if you want a leaner
+# production image.
+
+# Web framework
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+httpx>=0.27.0
+
+# DB
 sqlalchemy>=2.0.35
 alembic>=1.13.3
+
+# Config + crypto
 pydantic>=2.9.0
 pydantic-settings>=2.5.0
 python-dotenv>=1.0.1
 cryptography>=43.0.0
+
+# LLM providers
 anthropic>=0.39.0
 google-genai>=0.3.0
+
+# Scheduling
 apscheduler>=3.10.4
+
+# Ticimax SOAP
 zeep>=4.2.1
+
+# Output formats
 openpyxl>=3.1.5
-python-multipart>=0.0.12
-httpx>=0.27.0
+
+# Observability (Sprint 5)
+python-json-logger>=3.2.0
+
+# Test runner (kept here so the image can run pytest if needed)
 pytest>=8.3.0
 pytest-asyncio>=0.24.0
