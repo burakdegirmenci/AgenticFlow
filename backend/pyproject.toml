@@ -6,12 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "agenticflow-backend"
 version = "0.5.0"
 description = "AgenticFlow backend — self-hosted Ticimax workflow automation platform"
-readme = "../README.md"
 requires-python = ">=3.11"
-license = { file = "../LICENSE" }
+license = "MIT"
 authors = [{ name = "Burak Değirmenci" }]
+# README + LICENSE live at repo root (../README.md, ../LICENSE). We do not
+# reference them here because `pip install -e .` in CI refuses paths outside
+# the project directory. The license is declared via SPDX; the README is
+# linked through the project URLs section below.
 
-# Runtime dependencies. Pinned loosely here; exact reproducible pins live in
+# Runtime dependencies. Loose ranges here; exact reproducible pins live in
 # requirements.txt (kept as a lockfile equivalent for CI / Docker).
 dependencies = [
     "fastapi>=0.115.0",
@@ -30,6 +33,12 @@ dependencies = [
     "python-multipart>=0.0.12",
     "httpx>=0.27.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/burakdegirmenci/AgenticFlow"
+Repository = "https://github.com/burakdegirmenci/AgenticFlow"
+Documentation = "https://github.com/burakdegirmenci/AgenticFlow/tree/main/docs"
+Issues = "https://github.com/burakdegirmenci/AgenticFlow/issues"
 
 [project.optional-dependencies]
 dev = [
