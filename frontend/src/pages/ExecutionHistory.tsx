@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { listExecutions } from "@/api/executions";
 import { listWorkflows } from "@/api/workflows";
@@ -9,6 +10,7 @@ const STATUS_OPTIONS = ["", "SUCCESS", "ERROR", "RUNNING", "PENDING", "CANCELLED
 const TRIGGER_OPTIONS = ["", "MANUAL", "SCHEDULE", "POLLING", "AGENT"];
 
 export default function ExecutionHistory() {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState("");
   const [triggerFilter, setTriggerFilter] = useState("");
   const [search, setSearch] = useState("");
@@ -140,6 +142,7 @@ export default function ExecutionHistory() {
                   <th className="px-4 py-2 font-medium">Status</th>
                   <th className="px-4 py-2 font-medium">Başlangıç</th>
                   <th className="px-4 py-2 font-medium">Süre</th>
+                  <th className="w-8 px-2 py-2" aria-label="Detay"></th>
                 </tr>
               </thead>
               <tbody>
@@ -149,13 +152,27 @@ export default function ExecutionHistory() {
                       ? (new Date(e.finished_at).getTime() - new Date(e.started_at).getTime()) /
                         1000
                       : null;
+                  const goDetail = () => navigate(`/executions/${e.id}`);
                   return (
                     <tr
                       key={e.id}
-                      className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50"
+                      role="link"
+                      tabIndex={0}
+                      onClick={goDetail}
+                      onKeyDown={(ev) => {
+                        if (ev.key === "Enter" || ev.key === " ") {
+                          ev.preventDefault();
+                          goDetail();
+                        }
+                      }}
+                      className="cursor-pointer border-b border-neutral-100 last:border-0 transition-colors hover:bg-accent/5 focus:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <td className="px-4 py-2 font-mono">
-                        <Link to={`/executions/${e.id}`} className="text-ink hover:text-accent">
+                        <Link
+                          to={`/executions/${e.id}`}
+                          onClick={(ev) => ev.stopPropagation()}
+                          className="text-ink hover:text-accent"
+                        >
                           #{e.id}
                         </Link>
                       </td>
@@ -169,6 +186,9 @@ export default function ExecutionHistory() {
                       </td>
                       <td className="px-4 py-2 font-mono text-neutral-500">
                         {duration !== null ? `${duration.toFixed(2)}s` : "—"}
+                      </td>
+                      <td className="px-2 py-2 text-neutral-400">
+                        <ChevronRight className="h-4 w-4" strokeWidth={2} />
                       </td>
                     </tr>
                   );
