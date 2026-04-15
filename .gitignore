@@ -82,7 +82,10 @@ desktop.ini
 # ============================================================================
 # Auto-generated sources
 # ============================================================================
-backend/app/nodes/ticimax/_auto_generated.py
+# NOTE: `backend/app/nodes/ticimax/_auto_generated.py` is regenerable via
+# `python -m scripts.generate_node_catalog`, but it IS tracked so tests and
+# CI can resolve it without running the generator against a live Ticimax
+# server. Regenerate + commit when the upstream server.py changes.
 
 # ============================================================================
 # Debug / one-off test artifacts (kept out of the repo)
