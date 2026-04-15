@@ -203,10 +203,20 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
 - [x] Fixture fix: `execution_context` creates a real Workflow row (FK now enforced)
 - [x] Coverage: 47.8% → **48.3%**, 150 → **160 tests**
 - [x] CI green: `prettier` · `eslint` · `tsc` · `vitest` · `ruff` · `mypy` · `pytest`
-- [ ] Deferred to Sprint 7:
-  - Graceful shutdown that drains in-flight executions and marks forced stops as `ERROR` on next startup
+- [x] Sprint 7 landed the scheduled deferrals:
+  - Startup-time reconciliation of interrupted executions (`app/startup_recovery.py`, `reconcile_interrupted_executions`) marks orphaned `PENDING`/`RUNNING` executions + steps as `ERROR` with "Interrupted by process restart". 5-second grace window protects just-dispatched tasks. Called from `app.main.lifespan` between `init_db` and scheduler startup.
+  - `/health` (liveness) vs `/ready` (DB probe + scheduler probe) split. `/ready` returns 503 JSON with per-check breakdown on partial failure. `SchedulerService.is_started()` helper added.
+  - `SchedulerService` integration tests (20 tests): lifecycle, trigger builder (cron/polling/invalid/10s floor/unknown type), register (schedule/polling/inactive/missing/idempotent/multi-trigger), unregister (single + isolation), `refresh_all` (active-only + idempotent). Async-scoped so `AsyncIOScheduler` has a live event loop.
+  - Ticimax OA1 batch node tests (17 tests): `_extract_first_stok_kodu` pure helper + dry-run path (empty / skip paths / would-update / missing-ID / abort threshold / nested urunler_path / bad-path-raises).
+  - `/ready` integration tests (2): healthy 200 + DB-fail 503 via monkeypatched `SessionLocal`.
+  - Coverage 48.3% → **52.9%**, `fail_under` 45 → 50, test count 160 → **206** (+46).
+- [ ] Deferred to Sprint 8:
   - `docker compose run --rm backend alembic upgrade head` smoke test in CI
-  - Health + readiness probe split (`/health` liveness, `/ready` DB+scheduler)
+  - `UrunSelectNode` + `SiparisSelectNode` tests with a full zeep-factory fake
+  - LLM provider stream tests
+  - Full router coverage (pagination, filters, edge cases beyond smoke)
+  - Ratchet ESLint `recommendedTypeChecked` → `strictTypeChecked`
+  - Ratchet tsconfig `noUncheckedIndexedAccess: true`
 
 ---
 

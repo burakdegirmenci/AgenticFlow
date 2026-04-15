@@ -13,6 +13,13 @@ Unreleased entries are added to `## [Unreleased]`. On release, rename to the ver
 
 ### Added
 
+**Sprint 7 — Operational Resilience**
+- `app/startup_recovery.py` — `reconcile_interrupted_executions()` wired into the lifespan; marks any `PENDING`/`RUNNING` Execution + ExecutionStep left by a hard crash (SIGKILL / OOM / power loss) as `ERROR` with "Interrupted by process restart". 5 s grace window protects just-dispatched background tasks.
+- `GET /ready` readiness probe (DB `SELECT 1` + scheduler `is_started()`), 200 / 503 with per-check breakdown. Complements the unchanged `/health` liveness probe.
+- `SchedulerService.is_started()` helper.
+- 46 new tests: `test_startup_recovery.py` (7), `test_scheduler_service.py` (20, async-scoped for `AsyncIOScheduler`), `test_ticimax_oa1_batch.py` (17 — `_extract_first_stok_kodu` + dry-run path), 2 extra `/ready` smoke tests.
+- Coverage ratchet: backend `fail_under` 45 → 50 (actual 52.9%).
+
 **Sprint 6 — Prod Readiness**
 - `backend/Dockerfile` (multistage builder venv → `python:3.12-slim`), `frontend/Dockerfile` (multistage Node 22 build → `nginx:1.27-alpine`).
 - `docker-compose.yml` for the full self-hosted stack (backend + frontend + mounted `./data`, `./logs`, `./backend/exports`).
