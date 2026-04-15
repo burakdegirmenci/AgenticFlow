@@ -114,4 +114,10 @@ copy into a useless string.
 
 - Owner: Burak Değirmenci
 - Date of closure: 2026-04-15
-- Residual risk: token rotated; assumed low.
+- **Token rotation confirmed** by owner on 2026-04-15 — the leaked
+  `uye_kodu` has been revoked from the Ticimax admin panel and a
+  replacement issued to the customer. Any cached copies of the old
+  token (search engines, web archives, GitHub internal snapshots) are
+  now cryptographically useless.
+- Residual risk: **closed**. No live credentials were leaked by this
+  incident after the rotation step landed.
