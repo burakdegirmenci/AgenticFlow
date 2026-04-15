@@ -133,11 +133,17 @@ def workflow_factory(db_session: Session, site: Site):
 
 
 @pytest.fixture
-def execution_context(db_session: Session, site: Site) -> ExecutionContext:
-    """A minimal ExecutionContext suitable for unit-testing nodes in isolation."""
+def execution_context(db_session: Session, site: Site, workflow_factory) -> ExecutionContext:
+    """A minimal ExecutionContext suitable for unit-testing nodes in isolation.
+
+    We create a real ``Workflow`` row so tests that write rows referencing
+    ``workflow_id`` (e.g. ``polling_snapshots``) don't trip the FK constraint
+    enforced by ``PRAGMA foreign_keys = ON``.
+    """
+    wf = workflow_factory()
     return ExecutionContext(
         execution_id=1,
-        workflow_id=1,
+        workflow_id=wf.id,
         site=site,
         db=db_session,
         trigger_input={},

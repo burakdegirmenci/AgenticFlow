@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     LOG_FILE: str = "agenticflow.log"
     SENTRY_DSN: str = ""  # empty = Sentry disabled
 
+    # Optional auth — when set, every non-open request must carry
+    # `X-Api-Key: <value>`. Leave empty on private networks / behind a
+    # reverse proxy that already authenticates.
+    API_KEY: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

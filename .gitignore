@@ -29,10 +29,17 @@ build/
 # Database
 # ============================================================================
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 agenticflow.db
 backend/agenticflow.db
+# SQLite WAL sidecars (created by PRAGMA journal_mode = WAL).
+backend/agenticflow.db-shm
+backend/agenticflow.db-wal
+# Runtime data volume (docker compose mount).
+/data/
 
 # ============================================================================
 # Environment

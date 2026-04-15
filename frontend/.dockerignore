@@ -1,0 +1,25 @@
+.git
+.github
+node_modules
+dist
+coverage
+.vite
+*.tsbuildinfo
+
+# Tests aren't needed inside the build image.
+src/**/__tests__
+src/**/*.test.ts
+src/**/*.test.tsx
+src/**/*.spec.ts
+src/**/*.spec.tsx
+vitest.config.ts
+vitest.setup.ts
+eslint.config.js
+.prettierrc.json
+.prettierignore
+
+# Editor / local state
+.idea
+.vscode
+.env
+.env.*

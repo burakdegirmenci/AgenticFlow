@@ -1,0 +1,78 @@
+# AgenticFlow — single-tenant docker-compose stack.
+#
+# Services:
+#   backend   FastAPI (port 8000 inside the network, healthchecked).
+#   frontend  nginx-served React bundle that reverse-proxies /api, /metrics,
+#             /health to `backend`. Exposes 8080 on the host by default.
+#
+# The host-exposed port is intentionally NOT 80 — put your own reverse proxy
+# (Traefik / Caddy / nginx) in front to add TLS + auth and set CORS_ORIGINS
+# to the public URL. See docs/DEPLOYMENT.md for examples.
+#
+# Quickstart:
+#   cp .env.example .env        # fill in MASTER_KEY + one LLM provider
+#   docker compose up -d        # builds images + starts both services
+#   # visit http://localhost:8080
+#
+# Regenerate images after dep changes:
+#   docker compose build --pull
+#
+# Persistent data lives under ./data (SQLite DB) and ./logs (rotating JSON
+# logs). Exports are written to ./backend/exports on the host for easy pickup.
+
+name: agenticflow
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: agenticflow-backend:local
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      DATABASE_URL: "sqlite:////data/agenticflow.db"
+      LOG_DIR: "/var/log/agenticflow"
+      LOG_FILE: "agenticflow.log"
+      # Allow traffic from the frontend container (same compose network) +
+      # from the default host-exposed port. Operators SHOULD tighten this
+      # when exposing publicly.
+      CORS_ORIGINS: "http://localhost:8080,http://127.0.0.1:8080"
+    volumes:
+      - ./data:/data
+      - ./logs:/var/log/agenticflow
+      - ./backend/exports:/app/exports
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    # No public port mapping — frontend proxies everything via the compose
+    # network. Expose 8000 on the host only for debugging.
+    # ports:
+    #   - "127.0.0.1:8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: agenticflow-frontend:local
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${AGENTICFLOW_HOST_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3

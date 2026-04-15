@@ -1,0 +1,36 @@
+# Keep the Docker build context small and secret-free.
+.git
+.github
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Secrets / local state
+.env
+.env.*
+agenticflow.db
+*.sqlite
+*.sqlite3
+
+# Runtime outputs — generated fresh inside the container.
+exports
+logs
+tests
+coverage.xml
+.coverage
+.coverage.*
+.mypy_cache
+.ruff_cache
+.pytest_cache
+htmlcov
+
+# Scripts that are useful on a dev laptop only.
+scripts/legacy_scripts
+scripts/debug
+
+# IDE
+.idea
+.vscode

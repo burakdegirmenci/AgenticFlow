@@ -3,7 +3,8 @@
 import json
 from collections.abc import Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
@@ -22,12 +23,42 @@ def _json_serializer(value: object) -> str:
     return json.dumps(value, default=str, ensure_ascii=False)
 
 
+_IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
+
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    connect_args={"check_same_thread": False} if _IS_SQLITE else {},
     echo=False,
     json_serializer=_json_serializer,
 )
+
+
+if _IS_SQLITE:
+
+    @event.listens_for(Engine, "connect")
+    def _sqlite_pragmas(dbapi_connection: object, _connection_record: object) -> None:
+        """Apply SQLite pragmas on every new connection.
+
+        - ``journal_mode = WAL`` lets a writer coexist with concurrent readers;
+          that's the single biggest lever against ``database is locked`` when
+          the scheduler, an HTTP request, and a background execution race to
+          write (see docs/ARCHITECTURE.md §11 sharp-edge 1).
+        - ``synchronous = NORMAL`` trades a tiny durability window on power
+          loss for a ~2x write throughput — acceptable for single-tenant
+          self-hosted usage with a filesystem backup plan.
+        - ``foreign_keys = ON`` matches the model-level FKs we've declared.
+        - ``busy_timeout`` blocks a writer rather than raising immediately
+          when another transaction holds the write lock.
+        """
+        cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
+        try:
+            cursor.execute("PRAGMA journal_mode = WAL")
+            cursor.execute("PRAGMA synchronous = NORMAL")
+            cursor.execute("PRAGMA foreign_keys = ON")
+            cursor.execute("PRAGMA busy_timeout = 5000")
+        finally:
+            cursor.close()
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

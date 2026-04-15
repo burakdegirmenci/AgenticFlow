@@ -12,6 +12,7 @@ from app.config import get_settings
 from app.database import init_db
 from app.logging_config import get_logger, setup_logging
 from app.metrics import render_prometheus
+from app.middleware.api_key import ApiKeyMiddleware
 from app.middleware.logging import RequestLoggingMiddleware
 from app.routers import (
     agent,
@@ -89,8 +90,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Order matters: request logging runs inside CORS (so we still log OPTIONS).
+# Middleware order (Starlette executes add_middleware in REVERSE — the last
+# added runs first on the way in). We want:
+#   request → [CORS] → [auth] → [logging] → [route]
+# so CORS preflights are answered first, then auth gates the API surface,
+# then each admitted request is logged with its final identity.
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(ApiKeyMiddleware, api_key=settings.API_KEY)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins_list,
