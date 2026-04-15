@@ -127,7 +127,13 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
   - TicimaxClient import made lazy (`_load_ticimax_client()` + TicimaxClientUnavailable) so tests collect without the Claude Code skill installed
   - `backend/app/nodes/ticimax/_auto_generated.py` now tracked (237 SOAP nodes, ~430 KB) — regenerable but shipped for CI/checkout reproducibility
   - `frontend/coverage/` gitignored
-- [ ] **Manual step:** configure branch protection rules on GitHub (settings documented in CONTRIBUTING.md)
+- [x] Branch protection rules applied via GitHub REST API (PUT /repos/burakdegirmenci/AgenticFlow/branches/main/protection):
+  - Required approvals: 1 (CODEOWNERS reviewer required)
+  - Dismiss stale reviews on new commits: yes
+  - Required status checks: `CI gate` (strict mode — branch must be up-to-date)
+  - Linear history: yes
+  - Conversation resolution required: yes
+  - Force pushes: no · Deletions: no · Enforce on admins: no (maintainer override allowed)
 
 ### Sprint 4 — Test Coverage to Target
 - [ ] Engine: `executor`, `context`, template substitution — unit
