@@ -1,12 +1,20 @@
 """Multi-site TicimaxClient cache and factory fix wrapper.
 
-Imports TicimaxClient directly from the skill path (same pattern as
-ProductDetail/worker/worker.py). No MCP protocol hop.
+TicimaxClient ships from the local `ticimax-soap` Claude Code skill, which
+lives at `~/.claude/skills/ticimax-soap/scripts/`. The import is deferred to
+runtime so this module can load (and tests can collect) in environments
+where the skill isn't installed — for example, GitHub Actions runners.
+
+Attempts to actually USE the client without the skill installed raise a
+clear `TicimaxClientUnavailable` error pointing the user at installation
+steps.
 """
+
+from __future__ import annotations
 
 import os
 import sys
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
@@ -14,34 +22,54 @@ from app.models.site import Site
 from app.services.crypto_service import CryptoService
 from app.utils.zeep_helpers import fix_factories
 
-# --- Add skill scripts to sys.path (same as worker.py:28-32) -------------
-SKILL_SCRIPTS = os.path.join(
+if TYPE_CHECKING:
+    # Only imported for the type hint — never loaded at runtime during tests.
+    from ticimax_client import TicimaxClient  # type: ignore[import-not-found]
+
+
+_SKILL_SCRIPTS = os.path.join(
     os.path.expanduser("~"), ".claude", "skills", "ticimax-soap", "scripts"
 )
-if SKILL_SCRIPTS not in sys.path:
-    sys.path.insert(0, SKILL_SCRIPTS)
 
-try:
-    from ticimax_client import TicimaxClient  # type: ignore
-except ImportError as e:
-    raise ImportError(
-        f"Cannot import TicimaxClient from {SKILL_SCRIPTS}. "
-        f"Ensure ticimax-soap skill is installed. Original: {e}"
-    )
+
+class TicimaxClientUnavailable(RuntimeError):
+    """Raised when TicimaxClient cannot be imported at call time."""
+
+
+def _load_ticimax_client() -> type:
+    """Lazy import of TicimaxClient from the installed skill path.
+
+    Called the first time any caller actually needs a client. Keeps module
+    import side-effect free so tests that don't touch SOAP can still run.
+    """
+    if _SKILL_SCRIPTS not in sys.path:
+        sys.path.insert(0, _SKILL_SCRIPTS)
+    try:
+        from ticimax_client import TicimaxClient  # type: ignore[import-not-found]
+
+        return TicimaxClient
+    except ImportError as e:  # pragma: no cover - env-dependent
+        raise TicimaxClientUnavailable(
+            f"Cannot import TicimaxClient from {_SKILL_SCRIPTS}. "
+            "Install the `ticimax-soap` Claude Code skill "
+            "(ticimax_client.py must live there). "
+            f"Original import error: {e}"
+        ) from e
 
 
 class TicimaxService:
     """Cached multi-site TicimaxClient provider."""
 
-    _clients: dict[int, TicimaxClient] = {}
+    _clients: dict[int, Any] = {}
 
     @classmethod
-    def get_client(cls, site: Site) -> TicimaxClient:
+    def get_client(cls, site: Site) -> Any:
         if site.id in cls._clients:
             return cls._clients[site.id]
 
+        ticimax_client_cls = _load_ticimax_client()
         uye_kodu = CryptoService.decrypt(site.uye_kodu_encrypted)
-        client = TicimaxClient(domain=site.domain, uye_kodu=uye_kodu)
+        client = ticimax_client_cls(domain=site.domain, uye_kodu=uye_kodu)
         fix_factories(client)
         cls._clients[site.id] = client
         return client
@@ -51,7 +79,7 @@ class TicimaxService:
         cls._clients.pop(site_id, None)
 
     @classmethod
-    def get_by_id(cls, db: Session, site_id: int) -> TicimaxClient:
+    def get_by_id(cls, db: Session, site_id: int) -> Any:
         site = db.query(Site).filter(Site.id == site_id).first()
         if not site:
             raise ValueError(f"Site {site_id} not found")
