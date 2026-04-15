@@ -16,6 +16,26 @@ permissions:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Secret scan — gitleaks across the full repo history on every push.
+  # Landed after the 2026-04-15 üye-kodu leak (see docs/SECURITY_INCIDENT_2026-04-15.md).
+  # ---------------------------------------------------------------------------
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so gitleaks can walk every commit
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GITLEAKS_LICENSE not required for public repos; unset it for private.
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: "false"
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+  # ---------------------------------------------------------------------------
   # Backend: format, lint, type-check, tests, coverage gate
   # ---------------------------------------------------------------------------
   backend:
@@ -164,14 +184,16 @@ jobs:
   ci-gate:
     name: CI gate
     runs-on: ubuntu-latest
-    needs: [backend, frontend, audit]
+    needs: [secrets, backend, frontend, audit]
     if: always()
     steps:
       - name: Fail if any required job failed
         run: |
+          echo "secrets=${{ needs.secrets.result }}"
           echo "backend=${{ needs.backend.result }}"
           echo "frontend=${{ needs.frontend.result }}"
           echo "audit=${{ needs.audit.result }}"
-          if [[ "${{ needs.backend.result }}" != "success" ]]; then exit 1; fi
+          if [[ "${{ needs.secrets.result }}"  != "success" ]]; then exit 1; fi
+          if [[ "${{ needs.backend.result }}"  != "success" ]]; then exit 1; fi
           if [[ "${{ needs.frontend.result }}" != "success" ]]; then exit 1; fi
           # audit is advisory in v0.x; do not fail the gate on it yet.

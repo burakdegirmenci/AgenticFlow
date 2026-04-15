@@ -248,6 +248,47 @@ Pre-release tags (`-alpha`, `-beta`, `-rc`) are auto-marked as prerelease.
 
 ---
 
+## Secret-Scanning Policy
+
+- CI runs **gitleaks** on every push + PR with `fetch-depth: 0` (full history).
+  A match in any commit fails the `CI gate`.
+- Project config: `.gitleaks.toml`. Adds a Ticimax-specific rule for
+  `FON`-prefixed üye kodu tokens.
+- **Documented placeholder convention** — every example in docs, UI, and
+  test fixtures uses one of:
+  - `Demo Store` (site name)
+  - `demo.example.com` (domain)
+  - `FONxXXXXXXXXXXXXXXXXXXXXXXXXXX` (28 X's after `FONx`)
+  - `sk-ant-super-secret-*` / `ci-stub-*` for LLM keys
+  Anything else that **looks** like a credential **is** a credential until
+  proven otherwise.
+
+## Pre-Publish Checklist (before flipping repo visibility or adding collaborators)
+
+Run this every time, paste the outputs into the PR description:
+
+```bash
+# 1. No real brand / customer data in working tree.
+git grep -iE "elle\s*shoes|elleshoes|<your-customer-brand>" || echo "clean"
+
+# 2. No Ticimax tokens, no LLM keys, no Fernet keys.
+git grep -E "FON[0-9][A-Za-z0-9]{28}" || echo "clean"
+git grep -E "sk-(ant|proj)-[A-Za-z0-9_-]{20,}" | grep -v ".env.example\|super-secret\|placeholder" || echo "clean"
+git grep -E "AIza[A-Za-z0-9_-]{30,}" || echo "clean"
+
+# 3. .env / *.db / exports/ never entered history.
+git log --all --name-only --pretty=format: | sort -u | grep -E "\.env$|\.env\.|\.db$" && exit 1 || echo "clean"
+
+# 4. Local gitleaks sweep (full history).
+docker run -v "$PWD":/src zricethezav/gitleaks:latest detect \
+  --source /src --redact --no-git=false
+```
+
+All four sections must print "clean". Only then is it safe to flip the
+repo to public.
+
+Incident narrative that motivates this section: `docs/SECURITY_INCIDENT_2026-04-15.md`.
+
 ## Code of Conduct
 
 Be respectful. Assume good faith. Critique code, not people. Issues get closed for personal attacks without a second warning.
