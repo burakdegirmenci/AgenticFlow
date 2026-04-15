@@ -1,5 +1,0 @@
-FONxXXXXXXXXXXXXXXXXXXXXXXXXXX==>FONxXXXXXXXXXXXXXXXXXXXXXXXXXX
-FONxXXXXXXXXX==>FONxXXXXXXXXX
-Demo Store==>Demo Store
-demo.example.com==>demo.example.com
-Sen Demo Store müşteri destek asistanısın==>Sen e-ticaret mağazasının müşteri destek asistanısın
