@@ -53,6 +53,10 @@ class SchedulerService:
         self._started: bool = False
 
     # ------------------------------------------------------------------ lifecycle
+    def is_started(self) -> bool:
+        """Readiness probe: has ``start()`` been called and not undone?"""
+        return self._started and self._scheduler is not None
+
     def start(self) -> None:
         if self._started:
             return

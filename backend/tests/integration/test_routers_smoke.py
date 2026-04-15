@@ -59,6 +59,35 @@ def test_health_endpoint(client: TestClient) -> None:
     assert r.json() == {"status": "healthy"}
 
 
+def test_ready_endpoint_when_scheduler_started(client: TestClient) -> None:
+    """TestClient triggers the lifespan which starts the scheduler."""
+    r = client.get("/ready")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == "ready"
+    assert body["checks"]["db"] == "ok"
+    assert body["checks"]["scheduler"] == "ok"
+
+
+def test_ready_reports_503_when_db_fails(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If the DB probe raises, /ready must return 503 and surface the error."""
+    from app import main as main_module
+
+    def _broken_session() -> None:
+        raise RuntimeError("simulated DB outage")
+
+    monkeypatch.setattr(main_module, "SessionLocal", _broken_session)
+
+    r = client.get("/ready")
+    assert r.status_code == 503
+    body = r.json()
+    assert body["status"] == "not_ready"
+    assert isinstance(body["checks"]["db"], dict)
+    assert "simulated DB outage" in body["checks"]["db"]["error"]
+
+
 def test_metrics_endpoint_returns_prometheus_text(client: TestClient) -> None:
     # Prime a couple counters so the output has content.
     client.get("/")

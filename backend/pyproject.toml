@@ -218,11 +218,11 @@ omit = [
 precision = 1
 show_missing = true
 skip_covered = false
-# Sprint 5: router smoke tests + metrics + logging_config pushed coverage
-# to ~48%. SPECIFICATION targets ≥80% on core; next ratchets (Sprint 6+)
-# land scheduler integration, LLM providers, agent service, and full
-# Ticimax hand-written node tests.
-fail_under = 45
+# Sprint 7: scheduler integration + startup recovery + Ticimax OA1 batch
+# tests pushed coverage to ~53%. SPECIFICATION targets ≥80% on core; the
+# remaining gap is LLM providers, agent_service, routers beyond the smoke
+# layer, and the full hand-written Ticimax node catalog.
+fail_under = 50
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",
