@@ -136,15 +136,32 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
   - Force pushes: no · Deletions: no
   - Enforce on admins: no (maintainer direct push allowed for small/hotfix commits; PRs used for external / Claude-agent / Dependabot work)
 
-### Sprint 4 — Test Coverage to Target
-- [ ] Engine: `executor`, `context`, template substitution — unit
-- [ ] Every node in `transform/`, `logic/`, `output/` — unit
-- [ ] Top 20 Ticimax hand-written nodes — unit with `fake_ticimax`
-- [ ] Auto-generated Ticimax nodes — contract test (register, metadata present)
-- [ ] `SchedulerService` — integration (register / fire / unregister with `freezegun`)
-- [ ] `transform.only_new` — integration (snapshot behavior)
-- [ ] Frontend: store + api wrappers → 60% coverage
-- [ ] CI `--cov-fail-under=80` enabled
+### Sprint 4 — Test Coverage to Target (first pass)
+- [x] Engine: topological sort (7 tests), template substitution (8 tests), ExecutionContext (4 tests) — from Sprint 1
+- [x] Engine: full-graph executor integration (6 tests) — manual → filter → aggregate, cycle detection, unknown node type, run_existing from PENDING
+- [x] `transform/`: filter, aggregate, map, parse_stok — 8+8+11 tests
+- [x] `logic/`: if_condition, switch, loop — 13 tests
+- [x] `output/`: log, csv_export, excel_export, json_export + `_walk_dotted` helper — 13 tests
+- [x] `triggers/`: manual, schedule, polling output shapes — 7 tests
+- [x] Auto-generated Ticimax nodes: contract test (11 tests, all 262 nodes validated) — from Sprint 1
+- [x] `transform.only_new`: integration tests (5 tests — first-run seed, emit_on_first_run, subsequent diff, missing id, per-node-id isolation)
+- [x] `services/crypto_service`: Fernet round-trip (5 tests — unicode, IV variance, invalid token)
+- [x] `app.nodes.ai._common`: render_template + flatten_inputs + _get_path (14 tests)
+- [x] Frontend chatStore: 15 tests (panel, messages, streaming deltas, proposal/tool/error attachment, resetSession preservation)
+- [x] Frontend workflows API wrapper: 7 tests (list/get/create/update/delete/run with mocked axios adapter)
+- [x] Backend coverage: 22.9% → **35.8%** (`fail_under` ratcheted 20 → 35)
+- [x] Frontend coverage: 2.27% → **5.18%** (thresholds ratcheted: statements 2→5, branches 45→60, functions 20→50, lines 2→5)
+- [x] Test count: backend 34 → 129, frontend 14 → 36
+- [x] CI green on all runs (py3.11 + py3.12, node20 + node22)
+- [ ] Deferred to Sprint 5:
+  - Top 20 Ticimax hand-written nodes with `fake_ticimax` (needs zeep factory mocking)
+  - SchedulerService integration with `freezegun` (APScheduler lifecycle fixture)
+  - Router smoke tests with FastAPI TestClient
+  - LLM provider tests (stream response mocks)
+  - 16 real mypy bugs (unreachable in excel_export/csv_export, missing await in agent_service, TypedDict mismatches in ai.vision/vision_batch)
+  - Ratchet ESLint `recommendedTypeChecked` → `strictTypeChecked`
+  - Ratchet tsconfig `noUncheckedIndexedAccess: true`
+  - CI `--cov-fail-under=60+` after Sprint 5
 
 ### Sprint 5 — Observability & Logging + Code Hygiene
 - [ ] Structured JSON logging via `python-json-logger`
