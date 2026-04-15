@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -22,9 +22,11 @@ from app.models.site import Site
 from app.services.crypto_service import CryptoService
 from app.utils.zeep_helpers import fix_factories
 
-if TYPE_CHECKING:
-    # Only imported for the type hint — never loaded at runtime during tests.
-    from ticimax_client import TicimaxClient  # type: ignore[import-not-found]
+# Note: the real `TicimaxClient` type lives in the local `ticimax-soap` Claude
+# Code skill (see `_load_ticimax_client()` below). We intentionally do not
+# import it at the top level — the skill is not available in CI, and pulling
+# it in would break test collection. Methods annotate the returned client as
+# `Any` to keep the type surface honest without a hard dependency.
 
 
 _SKILL_SCRIPTS = os.path.join(
