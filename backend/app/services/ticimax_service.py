@@ -29,9 +29,28 @@ from app.utils.zeep_helpers import fix_factories
 # `Any` to keep the type surface honest without a hard dependency.
 
 
-_SKILL_SCRIPTS = os.path.join(
-    os.path.expanduser("~"), ".claude", "skills", "ticimax-soap", "scripts"
-)
+def _resolve_skill_path() -> str:
+    """Find the ticimax-soap skill's script directory.
+
+    Search order:
+      1. ``TICIMAX_SKILL_PATH`` env — explicit override (CI, tests, vendored).
+      2. ``/skill/ticimax-soap`` — the volume-mount inside the Docker image
+         (see docker-compose.yml). First choice in production.
+      3. ``~/.claude/skills/ticimax-soap/scripts`` — default location on a
+         developer workstation with the Claude Code skill installed.
+    """
+    explicit = os.environ.get("TICIMAX_SKILL_PATH")
+    if explicit and os.path.isdir(explicit):
+        return explicit
+    in_container = "/skill/ticimax-soap"
+    if os.path.isdir(in_container):
+        return in_container
+    return os.path.join(
+        os.path.expanduser("~"), ".claude", "skills", "ticimax-soap", "scripts"
+    )
+
+
+_SKILL_SCRIPTS = _resolve_skill_path()
 
 
 class TicimaxClientUnavailable(RuntimeError):
