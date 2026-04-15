@@ -5,13 +5,14 @@ DB'ye düşer. Hata → step ERROR, execution ERROR. Parallel/retry/loop Faz 3.
 """
 
 import time
-from datetime import datetime
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.engine.context import ExecutionContext
 from app.engine.errors import GraphError
+from app.logging_config import get_logger
+from app.metrics import EXECUTIONS_TOTAL, STEPS_TOTAL
 from app.models.execution import (
     Execution,
     ExecutionStatus,
@@ -19,6 +20,9 @@ from app.models.execution import (
     TriggerType,
 )
 from app.models.workflow import Workflow
+from app.utils.time import utcnow
+
+logger = get_logger("agenticflow.executor")
 
 
 class WorkflowExecutor:
@@ -39,7 +43,7 @@ class WorkflowExecutor:
             workflow_id=workflow.id,
             status=initial_status,
             trigger_type=trigger_type,
-            started_at=datetime.utcnow(),
+            started_at=utcnow(),
             input_data=trigger_input or {},
         )
         self.db.add(execution)
@@ -62,7 +66,7 @@ class WorkflowExecutor:
         if not workflow:
             execution.status = ExecutionStatus.ERROR
             execution.error = "Workflow not found"
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = utcnow()
             self.db.commit()
             return execution
         return await self._execute_graph(
@@ -103,7 +107,7 @@ class WorkflowExecutor:
         # Promote PENDING → RUNNING when the worker actually starts.
         if execution.status == ExecutionStatus.PENDING:
             execution.status = ExecutionStatus.RUNNING
-            execution.started_at = datetime.utcnow()
+            execution.started_at = utcnow()
             self.db.commit()
 
         site = workflow.site
@@ -124,7 +128,7 @@ class WorkflowExecutor:
         except GraphError as e:
             execution.status = ExecutionStatus.ERROR
             execution.error = str(e)
-            execution.finished_at = datetime.utcnow()
+            execution.finished_at = utcnow()
             self.db.commit()
             return execution
 
@@ -165,7 +169,7 @@ class WorkflowExecutor:
                 node_id=node_id,
                 node_type=node_type,
                 status=ExecutionStatus.RUNNING,
-                started_at=datetime.utcnow(),
+                started_at=utcnow(),
                 input_data=self._safe_json(parent_outputs),
             )
             self.db.add(step)
@@ -191,20 +195,52 @@ class WorkflowExecutor:
                 execution.status = ExecutionStatus.ERROR
                 execution.error = f"[{node_type}:{node_id}] {e}"[:2000]
 
-            step.finished_at = datetime.utcnow()
+            step.finished_at = utcnow()
             step.duration_ms = int((time.time() - t_start) * 1000)
             self.db.commit()
 
+            STEPS_TOTAL.increment(status=step.status.value, node_type=node_type)
+
             if execution.status == ExecutionStatus.ERROR:
+                logger.error(
+                    "execution_step_failed",
+                    extra={
+                        "execution_id": execution.id,
+                        "workflow_id": workflow.id,
+                        "node_id": node_id,
+                        "node_type": node_type,
+                        "error": step.error,
+                        "duration_ms": step.duration_ms,
+                    },
+                )
                 break
 
         # 3. Finalize
         if execution.status != ExecutionStatus.ERROR:
             execution.status = ExecutionStatus.SUCCESS
-        execution.finished_at = datetime.utcnow()
+        execution.finished_at = utcnow()
         execution.output_data = self._safe_json(context.node_outputs)
         self.db.commit()
         self.db.refresh(execution)
+
+        total_ms = 0
+        if execution.started_at and execution.finished_at:
+            total_ms = int((execution.finished_at - execution.started_at).total_seconds() * 1000)
+        EXECUTIONS_TOTAL.increment(
+            status=execution.status.value,
+            trigger=execution.trigger_type.value,
+        )
+        logger.info(
+            "execution_finished",
+            extra={
+                "execution_id": execution.id,
+                "workflow_id": workflow.id,
+                "trigger": execution.trigger_type.value,
+                "status": execution.status.value,
+                "step_count": len(order),
+                "duration_ms": total_ms,
+            },
+        )
         return execution
 
     # -----------------------------------------------------------------------
@@ -300,7 +336,7 @@ class WorkflowExecutor:
         error: str = "",
     ) -> None:
         """Insert a terminal ExecutionStep row (used for SKIPPED nodes)."""
-        now = datetime.utcnow()
+        now = utcnow()
         step = ExecutionStep(
             execution_id=execution_id,
             node_id=node_id,
@@ -322,8 +358,8 @@ class WorkflowExecutor:
             node_id=node_id,
             node_type=node_type,
             status=ExecutionStatus.ERROR,
-            started_at=datetime.utcnow(),
-            finished_at=datetime.utcnow(),
+            started_at=utcnow(),
+            finished_at=utcnow(),
             error=error,
         )
         self.db.add(step)

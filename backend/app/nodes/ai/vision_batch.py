@@ -440,7 +440,8 @@ class AIVisionBatchNode(BaseNode):
             max_tokens=max_tokens,
             temperature=temperature,
             system=system or "You are a helpful assistant.",
-            messages=[{"role": "user", "content": content_blocks}],
+            # See vision.py for rationale on the `typeddict-item` suppression.
+            messages=[{"role": "user", "content": content_blocks}],  # type: ignore[typeddict-item]
         )
         text = "".join(
             getattr(b, "text", "") for b in resp.content if getattr(b, "type", None) == "text"

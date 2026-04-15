@@ -11,6 +11,7 @@ from sqlalchemy import Boolean, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
+from app.utils.time import utcnow
 
 
 class AppSetting(Base):
@@ -20,6 +21,4 @@ class AppSetting(Base):
     key: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     value: Mapped[str] = mapped_column(Text, nullable=False, default="")
     encrypted: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)

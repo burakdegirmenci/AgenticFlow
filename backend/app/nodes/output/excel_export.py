@@ -40,17 +40,17 @@ def _walk_dotted(obj: Any, path: str) -> Any:
     return cur
 
 
-def _find_first_list_of_dicts(obj: Any, max_depth: int = 6) -> list[dict] | None:
+def _find_first_list_of_dicts(obj: Any, max_depth: int = 6) -> list[Any] | None:
     if max_depth < 0:
         return None
     if isinstance(obj, list):
         if obj and isinstance(obj[0], dict):
-            return obj  # type: ignore[return-value]
+            return obj
         return None
     if isinstance(obj, dict):
         for v in obj.values():
             if isinstance(v, list) and v and isinstance(v[0], dict):
-                return v  # type: ignore[return-value]
+                return v
         for v in obj.values():
             found = _find_first_list_of_dicts(v, max_depth - 1)
             if found is not None:
@@ -125,7 +125,8 @@ class ExcelExportNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         source_field = (config.get("source_field") or "").strip()
-        rows: list[dict] = []
+        # Heterogeneous list; see csv_export for rationale.
+        rows: list[Any] = []
         source_parent: str = ""
 
         for parent_id, parent_output in inputs.items():

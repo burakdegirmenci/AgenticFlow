@@ -8,12 +8,12 @@ Combine with a downstream Ticimax query node + ``transform.only_new`` to build
 a "watch for new orders" flow.
 """
 
-from datetime import datetime
 from typing import Any
 
 from app.engine.context import ExecutionContext
 from app.engine.node_base import BaseNode
 from app.nodes import register
+from app.utils.time import utcnow
 
 
 @register
@@ -54,6 +54,6 @@ class PollingTriggerNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         return {
-            "triggered_at": datetime.utcnow().isoformat(),
+            "triggered_at": utcnow().isoformat(),
             "interval_seconds": int(config.get("interval_seconds", 300)),
         }

@@ -1,6 +1,7 @@
 """SQLAlchemy engine and session management."""
 
 import json
+from collections.abc import Iterator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
@@ -35,7 +36,7 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db() -> Session:
+def get_db() -> Iterator[Session]:
     db = SessionLocal()
     try:
         yield db

@@ -73,7 +73,7 @@ class LLMProvider(ABC):
         """One-shot completion (non-streaming)."""
 
     @abstractmethod
-    async def stream(
+    def stream(
         self,
         system: str,
         messages: list[LLMMessage],
@@ -82,4 +82,11 @@ class LLMProvider(ABC):
         temperature: float = 0.7,
         max_tokens: int = 4096,
     ) -> AsyncIterator[LLMEvent]:
-        """Streaming completion. Yields LLMEvent objects."""
+        """Streaming completion. Returns an async iterator of LLMEvent objects.
+
+        NOTE: declared as a plain ``def`` returning ``AsyncIterator`` rather
+        than ``async def`` so subclasses can be defined as async generators
+        (``async def ...: yield``). That is the canonical Python way to type
+        an async-generator-producing factory without forcing callers to
+        ``await`` before ``async for``-iterating.
+        """

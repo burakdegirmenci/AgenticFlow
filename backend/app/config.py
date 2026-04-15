@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     PORT: int = 8000
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173"
 
+    # Observability
+    LOG_LEVEL: str = "INFO"  # DEBUG / INFO / WARNING / ERROR
+    LOG_DIR: str = "logs"  # empty string disables rotating file output
+    LOG_FILE: str = "agenticflow.log"
+    SENTRY_DSN: str = ""  # empty = Sentry disabled
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

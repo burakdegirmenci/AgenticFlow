@@ -5,6 +5,7 @@ from typing import Any
 from app.engine.context import ExecutionContext
 from app.engine.node_base import BaseNode
 from app.nodes import register
+from app.utils.time import utcnow
 
 
 @register
@@ -32,9 +33,7 @@ class ManualTriggerNode(BaseNode):
         inputs: dict[str, Any],
         config: dict[str, Any],
     ) -> dict[str, Any]:
-        from datetime import datetime
-
         return {
-            "triggered_at": datetime.utcnow().isoformat(),
+            "triggered_at": utcnow().isoformat(),
             "input": context.trigger_input,
         }

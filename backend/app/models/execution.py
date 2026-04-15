@@ -7,6 +7,7 @@ from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.time import utcnow
 
 
 class ExecutionStatus(str, enum.Enum):
@@ -39,7 +40,7 @@ class Execution(Base):
     input_data: Mapped[dict] = mapped_column(JSON, default=dict)
     output_data: Mapped[dict] = mapped_column(JSON, default=dict)
     error: Mapped[str] = mapped_column(Text, default="")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
     workflow: Mapped["Workflow"] = relationship(  # type: ignore[name-defined]
         "Workflow", back_populates="executions"
@@ -62,7 +63,7 @@ class ExecutionStep(Base):
     status: Mapped[ExecutionStatus] = mapped_column(
         Enum(ExecutionStatus), default=ExecutionStatus.PENDING
     )
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     input_data: Mapped[dict] = mapped_column(JSON, default=dict)
     output_data: Mapped[dict] = mapped_column(JSON, default=dict)

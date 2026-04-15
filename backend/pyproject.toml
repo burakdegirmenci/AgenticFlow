@@ -32,6 +32,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "python-multipart>=0.0.12",
     "httpx>=0.27.0",
+    "python-json-logger>=3.2.0",
 ]
 
 [project.urls]
@@ -49,6 +50,10 @@ dev = [
     "pytest-cov>=5.0.0",
     "freezegun>=1.5.0",
     "types-requests",
+]
+# Optional Sentry error tracking; activated when SENTRY_DSN env is set at runtime.
+sentry = [
+    "sentry-sdk[fastapi]>=2.18.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -193,9 +198,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:pydantic.*",
     "ignore::DeprecationWarning:zeep.*",
     "ignore::PendingDeprecationWarning",
-    # TODO(sprint-5): migrate datetime.utcnow() → datetime.now(UTC) and drop this.
-    # Tracked in docs/TASKS.md under Sprint 5 (Observability & code hygiene).
-    "ignore:datetime.datetime.utcnow:DeprecationWarning",
 ]
 
 # =============================================================================
@@ -214,11 +216,11 @@ omit = [
 precision = 1
 show_missing = true
 skip_covered = false
-# Sprint 4 interim: engine + transform + logic + output + triggers + ai/_common
-# + crypto_service + executor integration + only_new snapshot. Current: ~36%.
-# SPECIFICATION targets ≥80% on core; next ratchet (Sprint 5) lifts routers,
-# schemas, services/scheduler, services/agent, LLM providers.
-fail_under = 35
+# Sprint 5: router smoke tests + metrics + logging_config pushed coverage
+# to ~48%. SPECIFICATION targets ≥80% on core; next ratchets (Sprint 6+)
+# land scheduler integration, LLM providers, agent service, and full
+# Ticimax hand-written node tests.
+fail_under = 45
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",

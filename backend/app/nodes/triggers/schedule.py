@@ -6,12 +6,12 @@ expression and the trigger time. The actual scheduling happens in
 registers an APScheduler ``CronTrigger`` job.
 """
 
-from datetime import datetime
 from typing import Any
 
 from app.engine.context import ExecutionContext
 from app.engine.node_base import BaseNode
 from app.nodes import register
+from app.utils.time import utcnow
 
 
 @register
@@ -59,7 +59,7 @@ class ScheduleTriggerNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         return {
-            "triggered_at": datetime.utcnow().isoformat(),
+            "triggered_at": utcnow().isoformat(),
             "cron": config.get("cron", ""),
             "timezone": config.get("timezone", "UTC"),
         }

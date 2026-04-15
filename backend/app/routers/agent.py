@@ -125,9 +125,10 @@ async def chat_stream(req: ChatRequest, db: Session = Depends(get_db)):
         )
         session_id = session.id
     else:
-        session = agent_service.get_session(db, session_id)
-        if not session:
+        existing = agent_service.get_session(db, session_id)
+        if existing is None:
             raise HTTPException(404, "Session not found")
+        session = existing
 
     async def event_source() -> AsyncIterator[bytes]:
         # Emit session id first so the client can track new sessions

@@ -161,6 +161,10 @@ class AnthropicCLIProvider(LLMProvider):
 
         def _reader() -> None:
             try:
+                # Popen with stdout=PIPE always provides a non-None stream, but
+                # the annotation is ``IO[bytes] | None`` — narrow for mypy.
+                if proc.stdout is None:  # pragma: no cover - defensive
+                    return
                 for raw in proc.stdout:  # blocking readline loop
                     line_q.put(raw)
             finally:

@@ -48,24 +48,28 @@ def _walk_dotted(obj: Any, path: str) -> Any:
     return cur
 
 
-def _find_first_list_of_dicts(obj: Any, max_depth: int = 6) -> list[dict] | None:
-    """Recursively search for the first non-empty list-of-dicts.
+def _find_first_list_of_dicts(obj: Any, max_depth: int = 6) -> list[Any] | None:
+    """Recursively search for the first non-empty list whose first item is a dict.
 
     Depth-first, preferring shallower matches. Returns None if nothing found.
+
+    Note: only the first element is type-checked for perf reasons, so the
+    returned list may contain non-dict elements — callers should handle that
+    defensively (skip non-dicts in row iteration).
     """
     if max_depth < 0:
         return None
     if isinstance(obj, list):
         if obj and isinstance(obj[0], dict):
-            return obj  # type: ignore[return-value]
+            return obj
         # A list of non-dicts is not useful for CSV rows.
         return None
     if isinstance(obj, dict):
-        # First pass: shallow scan for a direct list-of-dicts child
+        # First pass: shallow scan for a direct list-of-dicts child.
         for v in obj.values():
             if isinstance(v, list) and v and isinstance(v[0], dict):
-                return v  # type: ignore[return-value]
-        # Second pass: recurse into children
+                return v
+        # Second pass: recurse into children.
         for v in obj.values():
             found = _find_first_list_of_dicts(v, max_depth - 1)
             if found is not None:
@@ -120,7 +124,10 @@ class CsvExportNode(BaseNode):
         config: dict[str, Any],
     ) -> dict[str, Any]:
         source_field = (config.get("source_field") or "").strip()
-        rows: list[dict] = []
+        # Heterogeneous list: the helper only validates the first element is
+        # a dict, and callers may supply dotted paths to lists with mixed
+        # types. The loop below skips non-dict rows defensively.
+        rows: list[Any] = []
         source_parent: str = ""
 
         for parent_id, parent_output in inputs.items():
@@ -157,7 +164,7 @@ class CsvExportNode(BaseNode):
         filename = (config.get("filename") or "export") or "export"
         file_path = os.path.join(exports_dir, f"{filename}_{ts}.csv")
 
-        # Collect all keys (union)
+        # Collect all keys (union).
         keys: list[str] = []
         seen: set[str] = set()
         for row in rows:

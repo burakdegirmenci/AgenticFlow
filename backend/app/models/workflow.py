@@ -6,6 +6,7 @@ from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Tex
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.time import utcnow
 
 
 class Workflow(Base):
@@ -18,10 +19,8 @@ class Workflow(Base):
     # React Flow compatible: {"nodes": [...], "edges": [...]}
     graph_json: Mapped[dict] = mapped_column(JSON, default=dict)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
     site: Mapped["Site"] = relationship("Site", lazy="joined")  # type: ignore[name-defined]
     executions: Mapped[list["Execution"]] = relationship(  # type: ignore[name-defined]

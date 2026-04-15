@@ -10,6 +10,7 @@ from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, UniqueConstr
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
+from app.utils.time import utcnow
 
 
 class PollingSnapshot(Base):
@@ -25,6 +26,4 @@ class PollingSnapshot(Base):
     node_id: Mapped[str] = mapped_column(String(100), nullable=False)
     # Last-seen unique IDs as JSON array of strings.
     last_seen_ids: Mapped[list] = mapped_column(JSON, default=list)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)

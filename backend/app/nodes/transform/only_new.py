@@ -11,12 +11,12 @@ avoids a thundering-herd effect where the first activation would process every
 historical row. Set ``emit_on_first_run=true`` to opt out.
 """
 
-from datetime import datetime
 from typing import Any
 
 from app.engine.context import ExecutionContext
 from app.engine.node_base import BaseNode
 from app.nodes import register
+from app.utils.time import utcnow
 
 _MAX_REMEMBERED_IDS = 10_000
 
@@ -167,7 +167,7 @@ class OnlyNewNode(BaseNode):
             context.db.add(snap)
         else:
             snap.last_seen_ids = merged_ids
-            snap.updated_at = datetime.utcnow()
+            snap.updated_at = utcnow()
         context.db.commit()
 
         return {

@@ -252,7 +252,10 @@ class AIVisionNode(BaseNode):
                 max_tokens=max_tokens,
                 temperature=temperature,
                 system=system or "You are a helpful assistant.",
-                messages=[{"role": "user", "content": content_blocks}],
+                # The Anthropic SDK uses a strict TypedDict for content blocks;
+                # our in-house dict form (e.g. {"type": "image", ...}) is
+                # compatible at runtime but wider than the SDK's declared types.
+                messages=[{"role": "user", "content": content_blocks}],  # type: ignore[typeddict-item]
             )
         except Exception as e:
             raise NodeError("", self.type_id, f"Anthropic vision call failed: {e}")
