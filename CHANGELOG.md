@@ -12,22 +12,43 @@ Unreleased entries are added to `## [Unreleased]`. On release, rename to the ver
 ## [Unreleased]
 
 ### Added
-- `docs/SPECIFICATION.md` — authoritative feature list, quality gates, and non-goals.
-- `docs/ARCHITECTURE.md` — layered system design, data flow, extension points.
-- `docs/IMPLEMENTATION.md` — rationale behind concrete code decisions.
-- `docs/TASKS.md` — retro + roadmap, living checklist.
-- `SECURITY.md`, `CONTRIBUTING.md`, `llms.txt`, `docs/prompt.md`.
-- `.env.example`, `LICENSE` (MIT).
+
+**Sprint 6 — Prod Readiness**
+- `backend/Dockerfile` (multistage builder venv → `python:3.12-slim`), `frontend/Dockerfile` (multistage Node 22 build → `nginx:1.27-alpine`).
+- `docker-compose.yml` for the full self-hosted stack (backend + frontend + mounted `./data`, `./logs`, `./backend/exports`).
+- `frontend/nginx.conf` — SPA fallback, `/assets/*` immutable cache, `/api` + `/metrics` + `/health` reverse-proxy, security headers, gzip.
+- Alembic bootstrap: `alembic/env.py` wired to `app.config.get_settings().DATABASE_URL` + `Base.metadata`; batch-mode for SQLite; baseline migration `cd868abd5d6d` creates all 8 tables.
+- `docs/MIGRATIONS.md` — authoring workflow, SQLite sharp edges, deploy flow, disaster recovery, revision history.
+- `docs/DEPLOYMENT.md` — quickstart, env reference, reverse-proxy recipes (Traefik / Caddy / nginx), auth options, backup runbook, Prometheus scrape, upgrade + housekeeping.
+- Optional `X-Api-Key` middleware (`app/middleware/api_key.py`, new `API_KEY` env) with open-paths allowlist + constant-time comparison; 10 new integration tests.
+- `.env.example` expanded with Sprint 5 / 6 variables.
+
+**Sprint 5 — Observability**
+- `app/logging_config.py` (structured JSON logs via `python-json-logger`, rotating file, secret-key redaction filter).
+- `app/middleware/logging.py` (HTTP request log with method / path / status / duration / request_id; X-Request-ID echo).
+- `app/metrics.py` + `GET /metrics` (Prometheus text exposition; `agenticflow_requests_total`, `agenticflow_executions_total`, `agenticflow_execution_steps_total`).
+- Executor instrumentation (`execution_finished`, `execution_step_failed` log records + metric increments).
+- Optional Sentry via `SENTRY_DSN` env + `[project.optional-dependencies] sentry` extra.
+- `docs/SPECIFICATION.md`, `docs/ARCHITECTURE.md`, `docs/IMPLEMENTATION.md`, `docs/TASKS.md`, `docs/prompt.md`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `llms.txt`, `LICENSE`, initial `.env.example` — Sprint 0.
+- Full discipline toolchain: `backend/pyproject.toml`, `frontend/eslint.config.js`, `.prettierrc.json`, `vitest.config.ts`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/dependabot.yml`, PR + issue templates, CODEOWNERS.
 - README badges + doc index.
 
 ### Changed
-- README restructured with feature → install → usage → docs-index flow.
 
-### Upcoming (tracked in `docs/TASKS.md`)
-- `pyproject.toml` with ruff + mypy + pytest.
-- Frontend ESLint flat config + Prettier + vitest.
-- `.github/workflows/ci.yml` (backend + frontend + audit).
-- Root debug-script cleanup; migrate `_test_*.py`, `_debug_*.py` to `backend/tests/` and `backend/scripts/debug/`.
+- **Backend database**: SQLite connections now apply `PRAGMA journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`, `busy_timeout = 5000` on every new connection (Sprint 6).
+- **Middleware order**: request → CORS → ApiKey → request-log → route (Sprint 6).
+- **FastAPI middleware stack** gains structured logging + optional API-key gate (Sprint 5 + 6).
+- **Type safety**: `datetime.utcnow()` (deprecated on Python 3.12) replaced with a `utcnow()` helper across 14 call sites + 10 model defaults (Sprint 5).
+- **MyPy**: strict-adjacent baseline is now a required CI gate; 18 existing errors fixed (unused ignores, unreachable code, missing awaits, generator return types, Optional-assignment dance in `routers/agent.py`, `llm/base.py stream()` signature) (Sprint 5).
+- **Ruff lint**: ratchet plan documented; current rule set is `E, W, F, I, B, SIM, UP`.
+- **Coverage thresholds**: backend `fail_under` 0 → 20 → 35 → 45 across Sprints; frontend 0 → 2 → 5 (lines); steady ratchet as new tests land.
+- **README** restructured with feature → install → docs-index flow; CI + style badges added.
+
+### Removed
+
+- Root `_test_*.py`, `_debug_*.py`, `_ui_test_*.py`, `_smoke_test_*.py` scripts migrated into `backend/scripts/debug/` and `backend/scripts/legacy_scripts/` (Sprint 1).
+- `backend/app/nodes/ticimax/_auto_generated.py` is now tracked (was gitignored) so tests + CI can resolve the 237 SOAP node classes without running the generator (Sprint 3 hotfix).
+- Pytest `datetime.utcnow` deprecation filter — fixed at the source (Sprint 5).
 
 ---
 

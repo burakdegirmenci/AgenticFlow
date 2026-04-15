@@ -187,13 +187,26 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
 - [x] Test count: 129 → 150 (+21)
 
 ### Sprint 6 — Prod Readiness
-- [ ] `Dockerfile` (multistage: builder → runtime)
-- [ ] `docker-compose.yml` (backend + frontend with nginx)
-- [ ] Switch Alembic to be the only DB bootstrap path
-- [ ] Optional API-key middleware (header `X-Api-Key`, env `API_KEY`)
-- [ ] WAL mode + short transactions (SQLite contention mitigation)
-- [ ] Graceful shutdown: drain running executions, mark in-flight as ERROR on forced stop
-- [ ] `docs/DEPLOYMENT.md` + `docs/MIGRATIONS.md`
+- [x] `backend/Dockerfile` — multistage (builder venv → `python:3.12-slim` runtime), non-root user, `tini` PID 1, HEALTHCHECK on /health, libxml2/libxslt runtime for zeep, .dockerignore drops secrets + caches
+- [x] `frontend/Dockerfile` — multistage (`node:22-alpine` build → `nginx:1.27-alpine` serve); SPA fallback, immutable /assets caching, `/api` + `/metrics` + `/health` reverse-proxy; security headers; gzip
+- [x] `docker-compose.yml` — backend + frontend; bind mounts for `./data` (SQLite + WAL sidecars), `./logs`, `./backend/exports`; healthchecked `depends_on`; frontend on :8080, backend internal-only
+- [x] Alembic bootstrap: `alembic init`, env.py wired to `app.config.get_settings().DATABASE_URL` + Base.metadata, batch-mode for SQLite ALTER, compare_type + compare_server_default
+- [x] Baseline migration `cd868abd5d6d_baseline_schema_sprint_6` creating all 8 tables; smoke-tested `alembic upgrade head` against a fresh SQLite
+- [x] `docs/MIGRATIONS.md` — policy, commands, SQLite sharp edges, deploy flow (stop → backup → migrate → start), disaster recovery with `alembic stamp`, pitfalls table, revision history
+- [x] `docs/DEPLOYMENT.md` — quickstart, image builds, env reference, reverse-proxy recipes (Traefik / Caddy / nginx), auth options, backup runbook (cold + `sqlite .backup` hot), Prometheus scrape, upgrade procedure, housekeeping cron, pre-public checklist
+- [x] Optional `X-Api-Key` middleware (`app/middleware/api_key.py`) — `API_KEY` env gate; open paths allowlist; OPTIONS preflights pass; `hmac.compare_digest` to avoid timing oracle
+- [x] SQLite hardening — `PRAGMA journal_mode = WAL` + `synchronous = NORMAL` + `foreign_keys = ON` + `busy_timeout = 5000` on every connection
+- [x] Middleware order rewired: request → CORS → ApiKey → request-log → route (so preflights answered first, auth gates before logging)
+- [x] New settings: `API_KEY` (default empty = disabled)
+- [x] `.env.example` expanded with Sprint 5/6 variables (observability + auth sections)
+- [x] Tests: 10 new integration tests for the auth middleware (disabled / missing / wrong / correct / open-paths / OPTIONS / empty header)
+- [x] Fixture fix: `execution_context` creates a real Workflow row (FK now enforced)
+- [x] Coverage: 47.8% → **48.3%**, 150 → **160 tests**
+- [x] CI green: `prettier` · `eslint` · `tsc` · `vitest` · `ruff` · `mypy` · `pytest`
+- [ ] Deferred to Sprint 7:
+  - Graceful shutdown that drains in-flight executions and marks forced stops as `ERROR` on next startup
+  - `docker compose run --rm backend alembic upgrade head` smoke test in CI
+  - Health + readiness probe split (`/health` liveness, `/ready` DB+scheduler)
 
 ---
 
