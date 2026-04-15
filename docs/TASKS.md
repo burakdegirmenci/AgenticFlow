@@ -127,13 +127,14 @@ Task syntax: `- [ ]` open, `- [x]` done, `- [~]` in progress, `- [!]` blocked.
   - TicimaxClient import made lazy (`_load_ticimax_client()` + TicimaxClientUnavailable) so tests collect without the Claude Code skill installed
   - `backend/app/nodes/ticimax/_auto_generated.py` now tracked (237 SOAP nodes, ~430 KB) — regenerable but shipped for CI/checkout reproducibility
   - `frontend/coverage/` gitignored
-- [x] Branch protection rules applied via GitHub REST API (PUT /repos/burakdegirmenci/AgenticFlow/branches/main/protection):
+- [x] Branch protection rules applied via GitHub REST API (PUT /repos/burakdegirmenci/AgenticFlow/branches/main/protection), aligned with Ersin Koç's pragmatic pattern observed across the @oxog ecosystem:
   - Required approvals: 1 (CODEOWNERS reviewer required)
   - Dismiss stale reviews on new commits: yes
   - Required status checks: `CI gate` (strict mode — branch must be up-to-date)
-  - Linear history: yes
+  - Linear history: **no** (merge commits allowed — matches @oxog pattern for PR-merged AI-agent / Dependabot work)
   - Conversation resolution required: yes
-  - Force pushes: no · Deletions: no · Enforce on admins: no (maintainer override allowed)
+  - Force pushes: no · Deletions: no
+  - Enforce on admins: no (maintainer direct push allowed for small/hotfix commits; PRs used for external / Claude-agent / Dependabot work)
 
 ### Sprint 4 — Test Coverage to Target
 - [ ] Engine: `executor`, `context`, template substitution — unit

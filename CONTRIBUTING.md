@@ -214,9 +214,9 @@ Target ≤ 400 lines changed. If it's bigger, the reviewer will ask you to split
 
 ## CI & Branch Protection
 
-`main` and `develop` are protected. The expected repo settings (configure under **Settings → Branches → Branch protection rules**):
+`main` is protected (active settings via `gh api repos/burakdegirmenci/AgenticFlow/branches/main/protection`):
 
-- ✅ Require a pull request before merging
+- ✅ Require a pull request before merging (external contributors)
 - ✅ Require approvals: **1**
 - ✅ Dismiss stale reviews when new commits are pushed
 - ✅ Require review from CODEOWNERS
@@ -224,8 +224,8 @@ Target ≤ 400 lines changed. If it's bigger, the reviewer will ask you to split
   - `CI gate` (aggregates backend + frontend + audit)
 - ✅ Require branches to be up to date before merging
 - ✅ Require conversation resolution before merging
-- ✅ Require linear history (no merge commits)
-- ✅ Do not allow bypassing the above settings
+- ⚠️ **Linear history NOT required** — merge commits are allowed so dependabot + AI-agent PRs can merge cleanly without rebase rituals
+- ⚠️ **Admins NOT enforced** — the maintainer can direct-push small fixes, hotfixes, or work that does not benefit from a review round-trip; this matches the pragmatic pattern used across the @oxog ecosystem
 
 **CI jobs** (see `.github/workflows/ci.yml`):
 
