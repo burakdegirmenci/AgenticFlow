@@ -11,6 +11,17 @@ Unreleased entries are added to `## [Unreleased]`. On release, rename to the ver
 
 ## [Unreleased]
 
+Nothing yet. Next entries go here.
+
+---
+
+## [0.5.0] — Discipline retrofit (Sprints 0–7)
+
+> First public release. Ships the full v0.5.x baseline (262 registered nodes,
+> React Flow canvas, agentic chat, manual/cron/polling triggers, Ticimax SOAP
+> integration) plus 8 sprints of discipline work: spec-driven docs, strict
+> toolchain, CI gate, observability, prod-readiness, operational resilience.
+
 ### Added
 
 **Sprint 7 — Operational Resilience**
