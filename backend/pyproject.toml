@@ -214,10 +214,11 @@ omit = [
 precision = 1
 show_missing = true
 skip_covered = false
-# Baseline: engine + a handful of transform/filter tests + full contract
-# coverage of NODE_REGISTRY. SPECIFICATION targets ≥80% on core, but we
-# ratchet up sprint by sprint (see docs/TASKS.md Sprint 4).
-fail_under = 20
+# Sprint 4 interim: engine + transform + logic + output + triggers + ai/_common
+# + crypto_service + executor integration + only_new snapshot. Current: ~36%.
+# SPECIFICATION targets ≥80% on core; next ratchet (Sprint 5) lifts routers,
+# schemas, services/scheduler, services/agent, LLM providers.
+fail_under = 35
 exclude_lines = [
     "pragma: no cover",
     "raise NotImplementedError",

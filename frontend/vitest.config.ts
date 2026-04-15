@@ -33,13 +33,14 @@ export default defineConfig({
         "src/styles/**",
       ],
       thresholds: {
-        // Start at baseline (current: workflowStore + apiClient only ~2% of src).
-        // SPECIFICATION targets ≥60% on core; ratcheted up each sprint as
-        // component / page / api coverage lands (see docs/TASKS.md Sprint 4).
-        statements: 2,
-        branches: 45,
-        functions: 20,
-        lines: 2,
+        // Sprint 4 baseline: workflowStore (98%), chatStore (~80%),
+        // apiClient interceptor, workflows api wrapper.
+        // SPECIFICATION targets ≥60% on core; next ratchet (Sprint 5) adds
+        // the remaining api/ wrappers, Layout, canvas renderers.
+        statements: 5,
+        branches: 60,
+        functions: 50,
+        lines: 5,
       },
     },
   },
