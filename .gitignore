@@ -18,6 +18,9 @@ ENV/
 .coverage.*
 coverage.xml
 htmlcov/
+# vitest / v8 coverage output
+coverage/
+frontend/coverage/
 .tox/
 build/
 # Note: we allow 'dist/' for Python (none produced here) but block frontend/dist below
