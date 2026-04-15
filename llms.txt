@@ -1,0 +1,61 @@
+# AgenticFlow
+
+> Self-hosted, single-tenant automation platform for Ticimax e-commerce merchants. Visual node-based workflow builder + agentic AI chat that turns 237 Ticimax SOAP operations into drag-and-drop automations, triggered manually, on cron, or via polling.
+
+## What It Is
+AgenticFlow is an n8n-style workflow canvas tailored to the Ticimax e-commerce platform. A user drags nodes (product list, order list, AI prompt, Excel export, etc.) onto a React Flow canvas, connects them with edges, configures each node, and runs the workflow — manually, on a cron schedule, or by polling for new records. An agentic chat (Claude / Gemini) can also produce a workflow graph directly from a natural-language description.
+
+## Scope
+- Single-tenant, self-hosted. One install = one user/team.
+- Ticimax first-class (all 237 SOAP ops); other platforms (İkas, Shopify, WooCommerce) architected-for but not shipped in v1.x.
+- Not a SaaS, not multi-tenant, not horizontally scaled.
+
+## Tech Stack
+- Backend: Python 3.11+, FastAPI, SQLAlchemy 2.x, SQLite, Alembic, APScheduler, Zeep, Pydantic v2, cryptography (Fernet), anthropic SDK, google-genai SDK.
+- Frontend: React 18 + TypeScript + Vite, @xyflow/react (React Flow), Zustand, TanStack Query, Tailwind, Lucide icons.
+- Tooling: ruff, mypy --strict, pytest, ESLint flat config, Prettier, vitest.
+
+## Key Documents
+- [docs/SPECIFICATION.md](docs/SPECIFICATION.md): Authoritative feature list, quality gates, non-goals, performance targets.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): Layered system design, data flow, extension points.
+- [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md): Rationale behind concrete code decisions.
+- [docs/TASKS.md](docs/TASKS.md): Retro + roadmap, living checklist.
+- [docs/USAGE.md](docs/USAGE.md): End-user guide for building workflows.
+- [SECURITY.md](SECURITY.md): Credential handling, Fernet rotation, vulnerability reporting.
+- [CONTRIBUTING.md](CONTRIBUTING.md): Dev setup, commands, PR rules.
+- [CHANGELOG.md](CHANGELOG.md): Per-version history.
+- [README.md](README.md): Quickstart.
+
+## Key Source Paths
+- `backend/app/main.py`: FastAPI app entry.
+- `backend/app/engine/executor.py`: DAG runner (topological sort + template substitution).
+- `backend/app/engine/node_base.py`: `BaseNode` abstract class all nodes inherit.
+- `backend/app/nodes/`: Node implementations by category.
+- `backend/app/nodes/ticimax/_auto_generated.py`: 237 auto-generated Ticimax SOAP nodes.
+- `backend/app/services/scheduler_service.py`: APScheduler singleton.
+- `backend/app/services/ticimax_service.py`: Multi-site TicimaxClient cache.
+- `backend/scripts/generate_node_catalog.py`: AST-parses Ticimax's server.py to generate node classes.
+- `frontend/src/pages/WorkflowEditor.tsx`: Canvas + chat + config panel.
+
+## Key Concepts
+- Workflow = persisted React Flow graph JSON bound to one site.
+- Execution = one run of a workflow; has many ExecutionSteps (one per node executed).
+- Node = a `BaseNode` subclass with `type_id`, `config_schema`, and async `execute()`.
+- Template expression = `{{node_id.field.path}}` in node config; resolved against parent outputs.
+- Trigger types: MANUAL, SCHEDULE (cron), POLLING (interval + only_new diff), AGENT.
+
+## Quality Bar
+- Python: mypy --strict, ruff lint + format, pytest with >=80% coverage on core (engine, services, non-auto-gen nodes).
+- Frontend: tsc --strict, ESLint + Prettier, vitest with >=60% coverage on non-canvas core.
+- CI enforces all of the above; pip-audit + npm audit must be clean before release.
+
+## What NOT to Do
+- Don't add multi-tenant / auth / billing tables; that's explicitly out of scope in v1.x.
+- Don't introduce Celery / RQ / Redis queues; APScheduler in-process is the design choice.
+- Don't use CSS-in-JS; Tailwind only.
+- Don't put business logic in routers; delegate to services.
+- Don't return non-JSON-serializable values from nodes.
+- Don't commit `agenticflow.db`, `.env`, `exports/*`, `_ui_test_screens/`, or any auto-generated node catalog diff without regenerating cleanly.
+
+## License
+MIT. See `LICENSE`.
