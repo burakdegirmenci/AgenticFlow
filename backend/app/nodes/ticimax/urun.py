@@ -31,9 +31,9 @@ class UrunSelectNode(BaseNode):
             "aktif": {
                 "type": "integer",
                 "title": "Aktif Durumu",
-                "description": "1 = Aktif, 0 = Pasif, -1 = Hepsi",
                 "default": 1,
                 "enum": [-1, 0, 1],
+                "enumNames": ["Hepsi", "Pasif", "Aktif"],
             },
             "kategori_id": {
                 "type": "integer",

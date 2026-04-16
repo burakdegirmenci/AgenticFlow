@@ -123,11 +123,20 @@ class SetSiparisDurumBatchNode(BaseNode):
             "yeni_durum": {
                 "type": "string",
                 "title": "Yeni Sipariş Durumu",
-                "description": (
-                    "SetSiparisDurum için string enum: Onaylandi, "
-                    "Paketleniyor, KargoyaVerildi, TeslimEdildi, Iptal vb."
-                ),
+                "description": "SetSiparisDurum API'sine gönderilecek durum.",
                 "default": "Onaylandi",
+                "enum": [
+                    "SiparisAlindi",
+                    "OnayBekliyor",
+                    "Onaylandi",
+                    "OdemeBekliyor",
+                    "Paketleniyor",
+                    "TedarikEdiliyor",
+                    "KargoyaVerildi",
+                    "TeslimEdildi",
+                    "Iptal",
+                    "Iade",
+                ],
             },
             "mail_bilgilendir": {
                 "type": "boolean",
