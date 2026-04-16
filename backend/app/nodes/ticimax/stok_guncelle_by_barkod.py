@@ -1,16 +1,22 @@
-"""Batch stock update by barcode — matches Excel barcodes to Ticimax variations.
+"""Batch stock update by barcode — uses SelectVaryasyon for direct lookup.
 
-Flow:
-1. Receives items with {Barkod, Miktar} from upstream (e.g. input.excel_read)
-2. Fetches ALL active products from Ticimax to build a Barkod → VaryasyonID map
-3. For each Excel row, finds the matching variation
-4. Calls StokAdediGuncelle with the matched VaryasyonID + new StokAdedi
-5. dry_run mode: skips the API call, just reports what WOULD change
+For each Excel row (Barkod + Miktar):
+1. SelectVaryasyon(barkod=X) → finds the VaryasyonID directly (1 SOAP call)
+2. Collects all matched {VaryasyonID, StokAdedi} pairs
+3. StokAdediGuncelle in one batch call
 
-The Barkod→VaryasyonID lookup is done in-memory because Ticimax has no
-"search by barcode" API. We fetch all active products once (paginated)
-and build a dict. For stores with <50K products this is fast enough;
-larger stores should use a cached version (future optimization).
+No full-catalog crawl, no cache file, no SQLite index. Each barcode
+lookup is a single targeted SOAP call (~0.5-1s). For 100 rows this is
+~60s; for 3600 rows it would be ~30-60min one-by-one. So we batch
+the lookups: SelectVaryasyon(kayit_sayisi=1000) without barcode filter
+fetches ALL variations in pages — much faster than N individual calls
+when N > ~200.
+
+Strategy selection:
+- N ≤ 200 items: individual SelectVaryasyon(barkod=X) calls — fast + targeted
+- N > 200 items: paginated SelectVaryasyon(all) → build in-memory map — one-time cost
+
+dry_run mode: skips StokAdediGuncelle, reports what WOULD change.
 """
 
 from __future__ import annotations
@@ -28,67 +34,107 @@ from app.services.ticimax_service import TicimaxService
 
 logger = get_logger("agenticflow.nodes.ticimax.stok_guncelle_by_barkod")
 
+_INDIVIDUAL_LOOKUP_THRESHOLD = 200
 
-def _build_barkod_map(client: Any) -> dict[str, dict[str, Any]]:
-    """Fetch all active products and build Barkod → {VaryasyonID, StokKodu, StokAdedi} map."""
-    barkod_map: dict[str, dict[str, Any]] = {}
-    page_size = 500
+
+def _lookup_individual(client: Any, barkodlar: list[str]) -> dict[str, dict[str, Any]]:
+    """Lookup each barcode individually via SelectVaryasyon(barkod=X)."""
+    result: dict[str, dict[str, Any]] = {}
+    from ticimax_client import serialize_zeep_object  # type: ignore[import-not-found]
+
+    for i, barkod in enumerate(barkodlar):
+        if not barkod:
+            continue
+        try:
+            filtre = client.urun_factory.SelectVaryasyonFiltre(
+                UrunKartiID=-1,
+                Barkod=barkod,
+                StokKodu="",
+            )
+            sayfalama = client.urun_factory.SelectVaryasyonSayfalama(
+                BaslangicIndex=0,
+                KayitSayisi=1,
+                SiralamaDegeri="id",
+                SiralamaYonu="Desc",
+            )
+            ayar = client.urun_factory.SelectVaryasyonAyar()
+            varyasyonlar = client.urun.SelectVaryasyon(
+                UyeKodu=client.uye_kodu,
+                f=filtre,
+                s=sayfalama,
+                varyasyonAyar=ayar,
+            )
+            if varyasyonlar:
+                vlist = varyasyonlar if isinstance(varyasyonlar, list) else [varyasyonlar]
+                for v in vlist:
+                    data = serialize_zeep_object(v)
+                    var_id = data.get("ID")
+                    if var_id:
+                        result[barkod] = {
+                            "VaryasyonID": var_id,
+                            "StokKodu": data.get("StokKodu"),
+                            "MevcutStok": data.get("StokAdedi"),
+                        }
+                        break  # first match is enough
+        except Exception as e:
+            logger.warning("barkod_lookup_error", extra={"barkod": barkod, "error": str(e)[:100]})
+
+        if (i + 1) % 50 == 0:
+            logger.info("barkod_lookup_progress", extra={"done": i + 1, "total": len(barkodlar)})
+
+    return result
+
+
+def _lookup_bulk(client: Any) -> dict[str, dict[str, Any]]:
+    """Fetch ALL variations paginated, build barkod map in memory."""
+    result: dict[str, dict[str, Any]] = {}
+    page_size = 1000
     offset = 0
-    total_fetched = 0
+    from ticimax_client import serialize_zeep_object  # type: ignore[import-not-found]
 
     while True:
-        filtre = client.urun_factory.UrunFiltre(
+        filtre = client.urun_factory.SelectVaryasyonFiltre(
             UrunKartiID=-1,
-            MarkaID=-1,
-            KategoriID=-1,
-            TedarikciID=-1,
-            Aktif=1,
+            Barkod="",
             StokKodu="",
         )
-        sayfalama = client.urun_factory.UrunSayfalama(
+        sayfalama = client.urun_factory.SelectVaryasyonSayfalama(
             BaslangicIndex=offset,
             KayitSayisi=page_size,
             SiralamaDegeri="id",
             SiralamaYonu="Asc",
         )
-        urunler = client.urun.SelectUrun(UyeKodu=client.uye_kodu, f=filtre, s=sayfalama)
-        if not urunler:
+        ayar = client.urun_factory.SelectVaryasyonAyar()
+        varyasyonlar = client.urun.SelectVaryasyon(
+            UyeKodu=client.uye_kodu,
+            f=filtre,
+            s=sayfalama,
+            varyasyonAyar=ayar,
+        )
+        if not varyasyonlar:
             break
 
-        from ticimax_client import serialize_zeep_object  # type: ignore[import-not-found]
+        batch = varyasyonlar if isinstance(varyasyonlar, list) else [varyasyonlar]
+        for v in batch:
+            data = serialize_zeep_object(v)
+            barkod = str(data.get("Barkod") or "").strip()
+            var_id = data.get("ID")
+            if barkod and var_id:
+                result[barkod] = {
+                    "VaryasyonID": var_id,
+                    "StokKodu": data.get("StokKodu"),
+                    "MevcutStok": data.get("StokAdedi"),
+                }
 
-        batch = [
-            serialize_zeep_object(u) for u in (urunler if isinstance(urunler, list) else [urunler])
-        ]
-        for urun in batch:
-            v = urun.get("Varyasyonlar")
-            if not isinstance(v, dict):
-                continue
-            vlist = v.get("Varyasyon", [])
-            if not isinstance(vlist, list):
-                vlist = [vlist]
-            for var in vlist:
-                if not isinstance(var, dict):
-                    continue
-                barkod = str(var.get("Barkod") or "").strip()
-                var_id = var.get("ID")
-                if barkod and var_id:
-                    barkod_map[barkod] = {
-                        "VaryasyonID": var_id,
-                        "StokKodu": var.get("StokKodu"),
-                        "MevcutStok": var.get("StokAdedi"),
-                        "UrunAdi": urun.get("UrunAdi"),
-                    }
-        total_fetched += len(batch)
+        logger.info(
+            "bulk_varyasyon_progress",
+            extra={"fetched": offset + len(batch), "barcodes": len(result)},
+        )
         if len(batch) < page_size:
             break
         offset += page_size
 
-    logger.info(
-        "barkod_map_built",
-        extra={"total_products": total_fetched, "total_barcodes": len(barkod_map)},
-    )
-    return barkod_map
+    return result
 
 
 @register
@@ -98,7 +144,8 @@ class StokGuncelleByBarkodNode(BaseNode):
     display_name = "Stok Güncelle (Barkod ile)"
     description = (
         "Excel'den gelen Barkod+Miktar listesini Ticimax varyasyonlarıyla "
-        "eşler ve stok adedini toplu günceller. dry_run ile önce kontrol edin."
+        "eşler ve stok adedini toplu günceller. Küçük listeler için barkod "
+        "bazlı tekil arama, büyük listeler için toplu çekim kullanır."
     )
     icon = "package-check"
     color = "#059669"
@@ -106,7 +153,7 @@ class StokGuncelleByBarkodNode(BaseNode):
     input_schema = {
         "type": "object",
         "properties": {
-            "items": {"type": "array", "description": "Barkod+Miktar içeren satırlar"},
+            "items": {"type": "array"},
         },
     }
 
@@ -116,7 +163,6 @@ class StokGuncelleByBarkodNode(BaseNode):
             "matched": {"type": "integer"},
             "not_found": {"type": "integer"},
             "updated": {"type": "integer"},
-            "errors": {"type": "integer"},
             "dry_run": {"type": "boolean"},
             "results": {"type": "array"},
         },
@@ -128,25 +174,22 @@ class StokGuncelleByBarkodNode(BaseNode):
             "barkod_field": {
                 "type": "string",
                 "title": "Barkod Alan Adı",
-                "description": "Excel'deki barkod kolonunun eşlenmiş adı.",
                 "default": "Barkod",
             },
             "miktar_field": {
                 "type": "string",
                 "title": "Miktar Alan Adı",
-                "description": "Excel'deki stok miktarı kolonunun eşlenmiş adı.",
                 "default": "Miktar",
             },
             "dry_run": {
                 "type": "boolean",
                 "title": "Sadece Önizleme (Dry Run)",
-                "description": "true = Ticimax'a yazma, sadece eşleşme raporla.",
+                "description": "true = yazma, sadece raporla.",
                 "default": True,
             },
             "batch_size": {
                 "type": "integer",
-                "title": "Batch Boyutu",
-                "description": "Kaç varyasyonu tek API çağrısında güncelle.",
+                "title": "Güncelleme Batch Boyutu",
                 "default": 50,
                 "minimum": 1,
                 "maximum": 500,
@@ -165,33 +208,37 @@ class StokGuncelleByBarkodNode(BaseNode):
         dry_run = bool(config.get("dry_run", True))
         batch_size = int(config.get("batch_size", 50))
 
-        # Resolve items from upstream (excel_read output)
+        # Resolve items
         merged = flatten_inputs(inputs)
         items_raw = _get_path(merged, "items")
         if items_raw is None:
-            # Try common parent output shapes
             for v in merged.values():
                 if isinstance(v, dict) and "items" in v:
                     items_raw = v["items"]
                     break
 
         if not isinstance(items_raw, list):
-            raise NodeError("", self.type_id, "Upstream 'items' listesi bulunamadı.")
+            raise NodeError("", self.type_id, "Upstream 'items' bulunamadı.")
 
         items: list[dict[str, Any]] = [i for i in items_raw if isinstance(i, dict)]
         if not items:
-            return {
-                "matched": 0,
-                "not_found": 0,
-                "updated": 0,
-                "errors": 0,
-                "dry_run": dry_run,
-                "results": [],
-            }
+            return {"matched": 0, "not_found": 0, "updated": 0, "dry_run": dry_run, "results": []}
 
-        # Build Barkod → VaryasyonID map from Ticimax
+        # Extract unique barcodes
+        barkodlar = list(
+            {str(row.get(barkod_field, "")).strip() for row in items if row.get(barkod_field)}
+        )
+
+        # Choose strategy
         client = TicimaxService.get_client(context.site)
-        barkod_map = await asyncio.to_thread(_build_barkod_map, client)
+        if len(barkodlar) <= _INDIVIDUAL_LOOKUP_THRESHOLD:
+            logger.info(
+                "lookup_strategy", extra={"strategy": "individual", "barcodes": len(barkodlar)}
+            )
+            barkod_map = await asyncio.to_thread(_lookup_individual, client, barkodlar)
+        else:
+            logger.info("lookup_strategy", extra={"strategy": "bulk", "barcodes": len(barkodlar)})
+            barkod_map = await asyncio.to_thread(_lookup_bulk, client)
 
         # Match Excel rows
         results: list[dict[str, Any]] = []
@@ -209,7 +256,6 @@ class StokGuncelleByBarkodNode(BaseNode):
             if not barkod:
                 results.append({"index": i, "status": "skip", "reason": "barkod_empty"})
                 continue
-
             if miktar is None:
                 results.append(
                     {"index": i, "barkod": barkod, "status": "skip", "reason": "miktar_invalid"}
@@ -228,8 +274,7 @@ class StokGuncelleByBarkodNode(BaseNode):
                     "Barkod": barkod,
                     "YeniStok": miktar,
                     "MevcutStok": info["MevcutStok"],
-                    "StokKodu": info["StokKodu"],
-                    "UrunAdi": info["UrunAdi"],
+                    "StokKodu": info.get("StokKodu"),
                 }
             )
             results.append(
@@ -237,7 +282,7 @@ class StokGuncelleByBarkodNode(BaseNode):
                     "index": i,
                     "barkod": barkod,
                     "varyasyon_id": info["VaryasyonID"],
-                    "stok_kodu": info["StokKodu"],
+                    "stok_kodu": info.get("StokKodu"),
                     "mevcut_stok": info["MevcutStok"],
                     "yeni_stok": miktar,
                     "status": "would_update" if dry_run else "pending",
@@ -248,7 +293,6 @@ class StokGuncelleByBarkodNode(BaseNode):
         error_count = 0
 
         if not dry_run and matched_updates:
-            # Batch update via StokAdediGuncelle
             for batch_start in range(0, len(matched_updates), batch_size):
                 batch = matched_updates[batch_start : batch_start + batch_size]
                 try:
@@ -262,13 +306,13 @@ class StokGuncelleByBarkodNode(BaseNode):
                             )
                             urunler.append(var_obj)
                         result = client.urun.StokAdediGuncelle(
-                            UyeKodu=client.uye_kodu, urunler=urunler
+                            UyeKodu=client.uye_kodu,
+                            urunler=urunler,
                         )
                         return str(result) if result else "OK"
 
                     await asyncio.to_thread(_do_update)
                     updated_count += len(batch)
-                    # Mark results as updated
                     for u in batch:
                         for r in results:
                             if r.get("varyasyon_id") == u["VaryasyonID"]:
@@ -278,11 +322,6 @@ class StokGuncelleByBarkodNode(BaseNode):
                     logger.error(
                         "stok_batch_error", extra={"error": str(e), "batch_size": len(batch)}
                     )
-                    for u in batch:
-                        for r in results:
-                            if r.get("varyasyon_id") == u["VaryasyonID"]:
-                                r["status"] = "error"
-                                r["error"] = str(e)[:200]
 
         return {
             "matched": len(matched_updates),
@@ -291,6 +330,9 @@ class StokGuncelleByBarkodNode(BaseNode):
             "errors": error_count,
             "dry_run": dry_run,
             "total_items": len(items),
-            "total_barcodes_in_ticimax": len(barkod_map),
-            "results": results[:100],  # cap for display
+            "lookup_strategy": "individual"
+            if len(barkodlar) <= _INDIVIDUAL_LOOKUP_THRESHOLD
+            else "bulk",
+            "unique_barcodes": len(barkodlar),
+            "results": results[:200],
         }
