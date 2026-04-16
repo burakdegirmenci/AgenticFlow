@@ -100,3 +100,7 @@ desktop.ini
 _ui_test_screens/
 backend/_ui_test_screens/
 .filter-repo-replacements.txt
+
+# Uploaded files (runtime data, never commit)
+backend/uploads/*.xlsx
+backend/uploads/*.csv
