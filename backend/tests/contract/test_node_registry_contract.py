@@ -26,6 +26,7 @@ _TYPE_ID_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+$")
 
 _ALLOWED_CATEGORIES = {
     "trigger",
+    "input",
     "ticimax",
     "transform",
     "logic",

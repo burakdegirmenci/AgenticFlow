@@ -45,9 +45,7 @@ def _resolve_skill_path() -> str:
     in_container = "/skill/ticimax-soap"
     if os.path.isdir(in_container):
         return in_container
-    return os.path.join(
-        os.path.expanduser("~"), ".claude", "skills", "ticimax-soap", "scripts"
-    )
+    return os.path.join(os.path.expanduser("~"), ".claude", "skills", "ticimax-soap", "scripts")
 
 
 _SKILL_SCRIPTS = _resolve_skill_path()

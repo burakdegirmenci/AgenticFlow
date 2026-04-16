@@ -30,6 +30,7 @@ from app.nodes.ai import (  # noqa: F401,E402
     vision,
     vision_batch,
 )
+from app.nodes.input import excel_read  # noqa: F401,E402
 from app.nodes.logic import (  # noqa: F401,E402
     if_condition,
     loop,
