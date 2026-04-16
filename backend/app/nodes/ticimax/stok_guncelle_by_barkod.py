@@ -46,18 +46,20 @@ def _lookup_individual(client: Any, barkodlar: list[str]) -> dict[str, dict[str,
         if not barkod:
             continue
         try:
+            # Ticimax requires Aktif + UrunKartiID even when filtering by
+            # Barkod — omitting them returns empty (confirmed by Ticimax support).
             filtre = client.urun_factory.VaryasyonFiltre(
-                UrunKartiID=-1,
+                Aktif=-1,
                 Barkod=barkod,
-                StokKodu="",
+                UrunKartiID=-1,
             )
             sayfalama = client.urun_factory.UrunSayfalama(
                 BaslangicIndex=0,
                 KayitSayisi=1,
-                SiralamaDegeri="id",
-                SiralamaYonu="Desc",
+                SiralamaDegeri="ID",
+                SiralamaYonu="DESC",
             )
-            ayar = client.urun_factory.SelectVaryasyonAyar()
+            ayar = client.urun_factory.SelectVaryasyonAyar(KategoriGetir=False)
             varyasyonlar = client.urun.SelectVaryasyon(
                 UyeKodu=client.uye_kodu,
                 f=filtre,
@@ -94,17 +96,16 @@ def _lookup_bulk(client: Any) -> dict[str, dict[str, Any]]:
 
     while True:
         filtre = client.urun_factory.VaryasyonFiltre(
+            Aktif=-1,
             UrunKartiID=-1,
-            Barkod="",
-            StokKodu="",
         )
         sayfalama = client.urun_factory.UrunSayfalama(
             BaslangicIndex=offset,
             KayitSayisi=page_size,
-            SiralamaDegeri="id",
-            SiralamaYonu="Asc",
+            SiralamaDegeri="ID",
+            SiralamaYonu="ASC",
         )
-        ayar = client.urun_factory.SelectVaryasyonAyar()
+        ayar = client.urun_factory.SelectVaryasyonAyar(KategoriGetir=False)
         varyasyonlar = client.urun.SelectVaryasyon(
             UyeKodu=client.uye_kodu,
             f=filtre,

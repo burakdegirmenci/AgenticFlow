@@ -1,68 +1,42 @@
-# SelectVaryasyon API Limitation
+# SelectVaryasyon API — Required Fields
 
-> Date: 2026-04-16 · Status: Ticimax'a ticket açıldı, cevap bekleniyor
+> Date: 2026-04-16 · Status: **ÇÖZÜLDÜ** (Ticimax support örneği ile doğrulandı)
 
 ## Bulgu
 
-`SelectVaryasyon(Barkod="3569898154440")` boş döner — ama aynı barkod
-`SelectUrun(UrunKartiID=37141)` ile erişilebilir.
+`SelectVaryasyon` boş döner eğer `Aktif` ve `UrunKartiID` alanları
+gönderilmezse. Bu alanlar opsiyonel görünse de **zorunlu** — servis
+bunlar olmadan sessizce boş döner (hata vermez).
 
-## Kanıt
+## Root Cause
 
-```
-SelectUrun(UrunKartiID=37141):
-  VarID=161411  Barkod=3569898154440  StokKodu=ABRUZ-12  ✅
+Ticimax SOAP API'si (.NET/WCF tabanlı) VaryasyonFiltre'deki bazı
+alanları zorunlu tutuyor. Gönderilmezse veya boş string gönderilirse
+deserialize hatası oluşuyor ve servis boş sonuç döndürüyor.
 
-SelectVaryasyon(Barkod="3569898154440"):
-  Zeep ile → boş
-  Raw SOAP ile → boş
-  Minimal XML (sadece Barkod + KayitSayisi) → boş
+## Çözüm
 
-SelectVaryasyon(Barkod="3569898112310"):
-  → FOUND (bazı barkodlar çalışıyor, bazıları çalışmıyor)
-```
+Ticimax support'un resmi örneğindeki zorunlu alanları her zaman gönder:
 
-## Test edilen XML (raw, zeep bypass)
-
-```xml
-<tem:SelectVaryasyon>
-   <tem:UyeKodu>***</tem:UyeKodu>
-   <tem:f>
-      <ns:Barkod>3569898154440</ns:Barkod>
-   </tem:f>
-   <tem:s>
-      <ns:KayitSayisi>10</ns:KayitSayisi>
-   </tem:s>
-   <tem:varyasyonAyar />
-</tem:SelectVaryasyon>
+```python
+filtre = client.urun_factory.VaryasyonFiltre(
+    Aktif=-1,            # -1 = tümü (ZORUNLU)
+    Barkod=barkod,       # filtreleme alanı
+    UrunKartiID=-1,      # -1 = tümü (ZORUNLU)
+)
+sayfalama = client.urun_factory.UrunSayfalama(
+    BaslangicIndex=0,
+    KayitSayisi=10,
+    SiralamaDegeri="ID",   # büyük harf
+    SiralamaYonu="DESC",   # büyük harf
+)
+ayar = client.urun_factory.SelectVaryasyonAyar(KategoriGetir=False)
 ```
 
-HTTP 200, `<SelectVaryasyonResult ... />` (self-closing = boş).
+## Kural (tüm Ticimax SOAP çağrıları için)
 
-## Olası Nedenler
-
-1. SelectVaryasyon sadece belirli koşuldaki varyasyonları indeksliyor
-   (aktif? belirli bir mağaza? belirli bir tarih aralığı?)
-2. Ticimax'ta bir bug / stale index
-3. WCF servis tarafında bir filtreleme mantığı
-
-## Etki
-
-`stok_guncelle_by_barkod` node'u bu API'ye bağımlıydı. SelectVaryasyon
-güvenilmez olduğu sürece barkod bazlı stok güncelleme çalışmaz.
-
-## Çözüm Seçenekleri (ticket cevabına göre)
-
-1. **Ticimax düzeltir** — SelectVaryasyon tüm varyasyonları döner →
-   mevcut node direkt çalışır
-2. **SelectUrun kullan + barkod index** — ilk seferde tüm ürünleri çek,
-   Barkod→VaryasyonID haritasını SQLite'a yaz, sonraki çalıştırmalarda
-   index'ten oku. Spec gerekir.
-3. **Farklı bir API endpoint** — Ticimax'tan barkod bazlı toplu
-   güncelleme API'si öğrenilir (varsa)
-
-## Bekleyen
-
-- [ ] Ticimax ticket cevabı
-- [ ] Cevaba göre mimari karar
-- [ ] Spec → implement → test (Ersin disiplini)
+1. **Boş string gönderme** — `StokKodu=""` WCF'i kırar
+2. **Int alanları atma** — `Aktif`, `UrunKartiID` gibi alanlar `-1` ile gönderilmeli
+3. **Sıralama büyük harf** — `"ID"`, `"DESC"` (küçük harf çalışmayabilir)
+4. **`KategoriGetir=False`** — performans için explicit set et
+5. Sadece **kullanılan filtreleri** gönder, gerisi hiç eklenmemeli
