@@ -76,6 +76,8 @@ def update_workflow(workflow_id: int, payload: WorkflowUpdate, db: Session = Dep
         wf.description = payload.description
     if payload.graph_json is not None:
         wf.graph_json = payload.graph_json
+    if payload.input_schema is not None:
+        wf.input_schema = payload.input_schema
     if payload.is_active is not None:
         wf.is_active = payload.is_active
 
