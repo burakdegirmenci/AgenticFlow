@@ -46,12 +46,12 @@ def _lookup_individual(client: Any, barkodlar: list[str]) -> dict[str, dict[str,
         if not barkod:
             continue
         try:
-            filtre = client.urun_factory.SelectVaryasyonFiltre(
+            filtre = client.urun_factory.VaryasyonFiltre(
                 UrunKartiID=-1,
                 Barkod=barkod,
                 StokKodu="",
             )
-            sayfalama = client.urun_factory.SelectVaryasyonSayfalama(
+            sayfalama = client.urun_factory.UrunSayfalama(
                 BaslangicIndex=0,
                 KayitSayisi=1,
                 SiralamaDegeri="id",
@@ -93,12 +93,12 @@ def _lookup_bulk(client: Any) -> dict[str, dict[str, Any]]:
     from ticimax_client import serialize_zeep_object  # type: ignore[import-not-found]
 
     while True:
-        filtre = client.urun_factory.SelectVaryasyonFiltre(
+        filtre = client.urun_factory.VaryasyonFiltre(
             UrunKartiID=-1,
             Barkod="",
             StokKodu="",
         )
-        sayfalama = client.urun_factory.SelectVaryasyonSayfalama(
+        sayfalama = client.urun_factory.UrunSayfalama(
             BaslangicIndex=offset,
             KayitSayisi=page_size,
             SiralamaDegeri="id",
