@@ -46,6 +46,7 @@ from app.nodes.ticimax import (  # noqa: F401,E402
     _auto_generated,  # noqa: F401,E402
     set_siparis_durum_batch,  # noqa: F401,E402
     siparis,
+    stok_guncelle_by_barkod,  # noqa: F401,E402
     update_aciklama_batch,  # noqa: F401,E402
     update_ozel_alan_1_batch,  # noqa: F401,E402
     urun,

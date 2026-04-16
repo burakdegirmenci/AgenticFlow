@@ -45,6 +45,7 @@ def create_workflow(payload: WorkflowCreate, db: Session = Depends(get_db)):
         description=payload.description,
         site_id=payload.site_id,
         graph_json=payload.graph_json,
+        input_schema=payload.input_schema,
         is_active=payload.is_active,
     )
     db.add(wf)
