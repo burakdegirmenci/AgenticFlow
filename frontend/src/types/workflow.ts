@@ -29,6 +29,7 @@ export interface Workflow {
   description: string | null;
   site_id: number;
   graph_json: WorkflowGraph;
+  input_schema: Record<string, unknown> | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;

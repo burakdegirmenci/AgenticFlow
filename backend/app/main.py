@@ -22,6 +22,7 @@ from app.routers import (
     settings as settings_router,
     sites,
     support,
+    uploads,
     workflows,
 )
 from app.startup_recovery import reconcile_interrupted_executions
@@ -124,6 +125,7 @@ app.include_router(executions.router, prefix="/api/executions", tags=["execution
 app.include_router(agent.router, prefix="/api/agent", tags=["agent"])
 app.include_router(settings_router.router, prefix="/api/settings", tags=["settings"])
 app.include_router(support.router, prefix="/api/support", tags=["support"])
+app.include_router(uploads.router, prefix="/api/uploads", tags=["uploads"])
 
 
 @app.get("/")

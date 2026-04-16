@@ -45,6 +45,7 @@ services:
       - ./data:/data
       - ./logs:/var/log/agenticflow
       - ./backend/exports:/app/exports
+      - ./backend/uploads:/app/uploads
       # Ticimax SOAP client lives in a Claude Code skill on the host
       # (~/.claude/skills/ticimax-soap/scripts/). Mount it read-only so the
       # container can `from ticimax_client import TicimaxClient` at call time.

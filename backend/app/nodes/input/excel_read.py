@@ -213,7 +213,7 @@ def _apply_column_map(
                 item[out_name] = None
 
         if skip_empty_rows and all(v is None or v == "" for v in item.values()):
-                continue
+            continue
 
         items.append(item)
         if max_rows > 0 and len(items) >= max_rows:

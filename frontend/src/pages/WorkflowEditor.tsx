@@ -30,6 +30,7 @@ import NodeConfigPanel from "@/components/Canvas/NodeConfigPanel";
 import NodePalette, { NODE_DRAG_MIME } from "@/components/Canvas/NodePalette";
 import { NodeRenderProvider } from "@/components/Canvas/NodeRenderContext";
 import AgentChat from "@/components/Chat/AgentChat";
+import RunWorkflowDialog from "@/components/RunWorkflowDialog";
 import { useChatStore } from "@/store/chatStore";
 import type { ExecutionDetail } from "@/types/execution";
 
@@ -243,9 +244,12 @@ export default function WorkflowEditor() {
     },
   });
 
+  const [showRunDialog, setShowRunDialog] = useState(false);
+
   const runMut = useMutation({
-    mutationFn: () => runWorkflow(workflowId),
+    mutationFn: (inputData?: Record<string, unknown>) => runWorkflow(workflowId, inputData),
     onSuccess: (execution) => {
+      setShowRunDialog(false);
       setActiveExecutionId(execution.id);
       qc.invalidateQueries({ queryKey: ["executions"] });
     },
@@ -430,7 +434,14 @@ export default function WorkflowEditor() {
             {saveMut.isPending ? "Kaydediliyor…" : "Kaydet"}
           </button>
           <button
-            onClick={() => runMut.mutate()}
+            onClick={() => {
+              const schema = workflow.data?.input_schema;
+              if (schema && typeof schema === "object" && Object.keys(schema.properties ?? {}).length > 0) {
+                setShowRunDialog(true);
+              } else {
+                runMut.mutate(undefined);
+              }
+            }}
             disabled={isRunning || dirty}
             className="flex items-center gap-1 border border-accent bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:bg-accent-hover disabled:opacity-40"
             title={dirty ? "Önce kaydet" : "Çalıştır"}
@@ -440,6 +451,17 @@ export default function WorkflowEditor() {
           </button>
         </div>
       </header>
+
+      {/* Runtime input dialog — shown when workflow has input_schema */}
+      {showRunDialog && workflow.data?.input_schema && (
+        <RunWorkflowDialog
+          workflowId={workflowId}
+          inputSchema={workflow.data.input_schema as unknown as Parameters<typeof RunWorkflowDialog>[0]["inputSchema"]}
+          onClose={() => setShowRunDialog(false)}
+          onRun={(inputData) => runMut.mutate(inputData)}
+          isRunning={runMut.isPending}
+        />
+      )}
 
       <div className="flex flex-1 overflow-hidden">
         <NodePalette catalog={catalog.data ?? []} onAdd={addNodeFromPalette} />
