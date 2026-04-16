@@ -57,40 +57,56 @@ class SiparisSelectNode(BaseNode):
             },
             "siparis_durumu": {
                 "type": "integer",
-                "title": "Sipariş Durumu ID",
-                "description": (
-                    "-1=Tümü, 0=Siparişiniz Alındı, 1=Onay Bekliyor, "
-                    "2=Onaylandı, 3=Ödeme Bekliyor, 4=Paketleniyor, "
-                    "5=Tedarik Ediliyor, 6=Kargoya Verildi, 7=Teslim Edildi, "
-                    "8=İptal, 9=İade."
-                ),
-                "default": -1,
+                "title": "Sipariş Durumu",
+                "description": "Filtrelenecek sipariş durumu.",
+                "default": 2,
+                "enum": [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                "enumNames": [
+                    "Tümü",
+                    "Siparişiniz Alındı",
+                    "Onay Bekliyor",
+                    "Onaylandı",
+                    "Ödeme Bekliyor",
+                    "Paketleniyor",
+                    "Tedarik Ediliyor",
+                    "Kargoya Verildi",
+                    "Teslim Edildi",
+                    "İptal",
+                    "İade",
+                ],
             },
             "odeme_durumu": {
                 "type": "integer",
                 "title": "Ödeme Durumu",
                 "default": -1,
+                "enum": [-1, 0, 1],
+                "enumNames": ["Tümü", "Ödenmedi", "Ödendi"],
             },
             "odeme_tipi": {
                 "type": "integer",
-                "title": "Ödeme Tipi ID",
+                "title": "Ödeme Tipi",
                 "description": (
-                    "-1=Tümü, 0=KrediKarti, 1=Havale, 2=KapidaNakit, "
-                    "3=KapidaKK. NOT: Ticimax bu filtreyi server tarafında "
-                    "güvenilir şekilde uygulamıyor; client-side doğrulama "
-                    "set_durum_batch node'unda yapılır."
+                    "NOT: Ticimax bu filtreyi server tarafında güvenilir "
+                    "şekilde uygulamıyor; sonuçları client-side doğrulayın."
                 ),
                 "default": -1,
+                "enum": [-1, 0, 1, 2, 3],
+                "enumNames": [
+                    "Tümü",
+                    "Kredi Kartı",
+                    "Havale/EFT",
+                    "Kapıda Nakit",
+                    "Kapıda Kredi Kartı",
+                ],
             },
             "odeme_getir": {
                 "type": "boolean",
                 "title": "Ödeme Detaylarını Getir",
                 "description": (
-                    "True ise Odemeler.WebSiparisOdeme[] dolu gelir "
-                    "(OdemeTipi, Onaylandi, Tutar vb.). Client-side "
-                    "ödeme filtresi için zorunludur."
+                    "Odemeler alanını doldurur (OdemeTipi, Onaylandi, Tutar). "
+                    "Raporlama workflow'larında açık olmalı."
                 ),
-                "default": False,
+                "default": True,
             },
             "kaynaklar": {
                 "type": "string",
@@ -105,7 +121,7 @@ class SiparisSelectNode(BaseNode):
             "kayit_sayisi": {
                 "type": "integer",
                 "title": "Sayfa Büyüklüğü",
-                "default": 50,
+                "default": 200,
                 "minimum": 1,
                 "maximum": 500,
             },
