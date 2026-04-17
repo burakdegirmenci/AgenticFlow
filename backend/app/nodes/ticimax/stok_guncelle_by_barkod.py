@@ -92,7 +92,7 @@ def _lookup_bulk(client: Any) -> dict[str, dict[str, Any]]:
     result: dict[str, dict[str, Any]] = {}
     page_size = 1000
     offset = 0
-    from ticimax_client import serialize_zeep_object  # type: ignore[import-not-found]
+    from ticimax_client import serialize_zeep_object
 
     while True:
         filtre = client.urun_factory.VaryasyonFiltre(

@@ -50,6 +50,11 @@ class Settings(BaseSettings):
     # reverse proxy that already authenticates.
     API_KEY: str = ""
 
+    # Telegram Bot — empty = disabled (bot service won't start)
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""  # default chat for notifications
+    TELEGRAM_ALLOWED_CHAT_IDS: str = ""  # comma-separated allowlist; empty = allow all
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

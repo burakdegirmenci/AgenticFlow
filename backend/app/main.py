@@ -80,17 +80,20 @@ async def lifespan(app: FastAPI):
     reconcile_interrupted_executions()
 
     from app.services.scheduler_service import scheduler_service
+    from app.services.telegram_bot_service import telegram_bot_service
 
     scheduler_service.start()
     scheduler_service.refresh_all()
+
+    telegram_bot_service.start(
+        token=settings.TELEGRAM_BOT_TOKEN,
+        default_chat_id=settings.TELEGRAM_CHAT_ID,
+        allowed=settings.TELEGRAM_ALLOWED_CHAT_IDS,
+    )
+
     logger.info("app_started", extra={"version": app.version})
     yield
-    # Shutdown — AsyncIOScheduler.shutdown(wait=False) is already called
-    # inside SchedulerService.shutdown(). Any in-flight executions that
-    # the scheduler dispatched as BackgroundTasks are allowed to finish
-    # on their own event loop. Anything that doesn't finish before the
-    # worker is killed is picked up by reconcile_interrupted_executions
-    # on the next boot.
+    telegram_bot_service.stop()
     scheduler_service.shutdown()
     logger.info("app_stopped")
 

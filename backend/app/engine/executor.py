@@ -4,6 +4,7 @@ MVP: Tek worker, sıralı topological execution. Her node için ExecutionStep
 DB'ye düşer. Hata → step ERROR, execution ERROR. Parallel/retry/loop Faz 3.
 """
 
+import asyncio
 import time
 from typing import Any
 
@@ -241,6 +242,18 @@ class WorkflowExecutor:
                 "duration_ms": total_ms,
             },
         )
+
+        # Telegram notification hook — fire-and-forget, never blocks execution
+        try:
+            from app.services.telegram_bot_service import telegram_bot_service
+
+            if telegram_bot_service.is_started():
+                asyncio.get_event_loop().create_task(
+                    telegram_bot_service.notify_execution(execution.id)
+                )
+        except Exception:
+            pass  # notification failure must never affect execution
+
         return execution
 
     # -----------------------------------------------------------------------
